@@ -1,0 +1,225 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/DevOps-B10/DevOps_B10/e2/task.schema.json",
+  "title": "Job",
+  "description": "统一任务模型——四类服务共用外壳。9 个公共字段，DRAFT / FULL_CHECK / INCREMENTAL_CHECK / REPAIR 四类对象均可表达。",
+  "type": "object",
+
+  "required": [
+    "schema_version",
+    "job_id",
+    "trace_id",
+    "job_type",
+    "status",
+    "execution",
+    "input"
+  ],
+
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "契约版本，破坏性变更必须升位"
+    },
+    "job_id": {
+      "type": "string",
+      "pattern": "^job-[a-z0-9]+$",
+      "description": "服务端生成的唯一编号"
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "一次平台流程的串联 ID"
+    },
+    "job_type": {
+      "enum": ["DRAFT", "FULL_CHECK", "INCREMENTAL_CHECK", "REPAIR"],
+      "description": "四类任务之一"
+    },
+    "status": {
+      "enum": ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "TIMED_OUT", "CANCELLED"],
+      "description": "状态机：QUEUED → RUNNING → SUCCEEDED / FAILED / TIMED_OUT / CANCELLED"
+    },
+    "execution": {
+      "$ref": "#/definitions/execution",
+      "description": "执行元信息，与 input / output / error 并列"
+    },
+    "input": {
+      "type": "object",
+      "description": "任务输入，按 job_type 各自的契约定义"
+    },
+    "output": {
+      "type": "object",
+      "description": "任务产出，产物通过 URI 引用交接",
+      "properties": {
+        "artifacts": { "$ref": "#/definitions/artifact_list" },
+        "findings": { "$ref": "#/definitions/finding_list" }
+      }
+    },
+    "error": {
+      "$ref": "#/definitions/error",
+      "description": "系统执行错误。正常分析发现写 output.findings，不写这里"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+
+  "allOf": [
+    {
+      "description": "INCREMENTAL_CHECK 必须有 baseline，不得退化为全量检测",
+      "if": {
+        "properties": { "job_type": { "const": "INCREMENTAL_CHECK" } },
+        "required": ["job_type"]
+      },
+      "then": {
+        "properties": {
+          "input": { "required": ["baseline"] }
+        }
+      }
+    },
+    {
+      "description": "SUCCEEDED 必须有 output",
+      "if": {
+        "properties": { "status": { "const": "SUCCEEDED" } },
+        "required": ["status"]
+      },
+      "then": { "required": ["output"] }
+    },
+    {
+      "description": "FAILED / TIMED_OUT 必须有 error",
+      "if": {
+        "properties": { "status": { "enum": ["FAILED", "TIMED_OUT"] } },
+        "required": ["status"]
+      },
+      "then": { "required": ["error"] }
+    }
+  ],
+
+  "definitions": {
+    "execution": {
+      "type": "object",
+      "description": "执行元信息。记录这次任务是怎么跑的，不含业务输入与产出",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["ASYNC", "SYNC"],
+          "description": "执行模式；四类任务均走 ASYNC"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "超时上限（秒），超时后 status = TIMED_OUT、error.code = EXEC_4002"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "开始执行时间；QUEUED 阶段可缺省"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "结束时间（含失败与超时）；非终态可缺省"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "第几次尝试，从 1 起；REPAIR 迭代与重试均递增"
+        },
+        "command": {
+          "type": "string",
+          "description": "实际执行的命令，便于失败时定位版本与参数"
+        },
+        "resources": {
+          "type": "object",
+          "description": "资源限制或占用，如 cpu / memory_mb",
+          "properties": {
+            "cpu": { "type": "string" },
+            "memory_mb": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+
+    "error": {
+      "type": "object",
+      "description": "系统执行错误对象。检测出 MISSING / REDUNDANT 属于正常分析发现，不写在此处",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z]+_[0-9]{4}$",
+          "description": "错误码 {模块}_{四位数字}；域：1=Schema 2=Baseline 3=Env 4=Exec 5=Analysis 6=NotFound 7=Conflict"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "人类可读的失败说明"
+        },
+        "detail": {
+          "type": "object",
+          "description": "结构化上下文，如 step / exit_code / log_uri"
+        }
+      }
+    },
+
+    "artifact": {
+      "type": "object",
+      "description": "产物引用。Job 只保存元数据，大文件通过 URI 交接",
+      "required": ["artifact_id", "type", "uri", "producer_job_id"],
+      "properties": {
+        "artifact_id": { "type": "string", "minLength": 1 },
+        "type": {
+          "enum": [
+            "DOCKERFILE",
+            "IMAGE_REF",
+            "GIT_PATCH",
+            "BUILD_LOG",
+            "ACTUAL_GRAPH",
+            "DECLARED_GRAPH",
+            "MD_REPORT",
+            "RD_REPORT"
+          ]
+        },
+        "uri": {
+          "type": "string",
+          "pattern": "^artifact://[a-z0-9]+/[a-z0-9-]+/.+$",
+          "description": "artifact://<pair_id>/<job_id>/<relative_path>"
+        },
+        "media_type": { "type": "string" },
+        "producer_job_id": { "type": "string", "pattern": "^job-[a-z0-9]+$" },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "完整性校验，64 位小写十六进制"
+        }
+      }
+    },
+
+    "finding": {
+      "type": "object",
+      "description": "正常分析发现，任务状态仍可为 SUCCEEDED",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["MISSING", "REDUNDANT"] },
+        "target": { "type": "string" },
+        "dependency": { "type": "string" }
+      }
+    },
+
+    "artifact_list": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/artifact" }
+    },
+
+    "finding_list": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/finding" }
+    }
+  }
+}

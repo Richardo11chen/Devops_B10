@@ -201,27 +201,53 @@
 B10 组已克隆贵组仓库到本地只读参考（基线 commit `7720a30`），逐条确认与 DRAFT 任务相关的接口字段。
 B10 负责 DRAFT + MDFixer，贵组负责 BuildChecker + EChecker。以下只涉及 DRAFT 部分，不涉及检测类任务。
 
-## 已确认的 DRAFT 字段
+## 已确认的 DRAFT 字段（B10 逐条复核后）
 
-（此节由 B10 组长在逐条复核 A 组原文件后回填）
+以下字段已核对无误，B10 原样采纳：
+
+| # | 字段 / 约定 | 结论 |
+|---|-------------|------|
+| 1 | `job_type = "DRAFT"` | ✅ 确认 |
+| 2 | `input.repository.{url, commit}`（commit 用完整 40 位 SHA） | ✅ 确认 |
+| 3 | `input.build.{command, verify_command}` | ✅ 确认 |
+| 4 | `input.max_iterations = 5` | ✅ 确认 |
+| 5 | `input.options.{base_image, keep_intermediate_images}` | ✅ 确认，且 `base_image` 必须可指定 |
+| 6 | 状态枚举六态 | ✅ 确认 |
+| 7 | `error.code = ENV_3002` 为 **DRAFT 专用** | ✅ 确认（依 `error_codes.md` 该行标注「可能抛出的服务：DRAFT」） |
+| 8 | 错误对象固定字段 `code` / `message` / `detail` | ✅ 确认 |
+| 9 | 产物元数据字段与 `artifact://<pair_id>/<job_id>/<relative_path>` 格式 | ✅ 确认 |
+| 10 | `pair_id = pair10` 为**双组共用**命名空间 | ✅ 确认（依 `artifact_format.md`「配对组编号」） |
+| 11 | **B 组产物类型占位** `DOCKERFILE` / `IMAGE_REF` / `GIT_PATCH` | ✅ **B10 予以确认**；另补复用贵组已有的 `BUILD_LOG` |
+| 12 | `MISSING` / `REDUNDANT` 写 `output.findings`，任务可为 `SUCCEEDED` | ✅ 确认 |
+| 13 | 反例行为（`ABC`→`SCHEMA_1001`；缺 `baseline`→`BASELINE_2001`） | ✅ 确认 |
 
 ## 需要贵组澄清的问题
 
-### 1. DRAFT 请求契约缺公共字段
+### 1. ⚠️ 请求侧是否携带 `schema_version` —— 课程要求与贵组现有实现冲突
 
-`e2/contracts/dockerfile_job.req.json` 目前只有 `job_type` 和 `input`：
+贵组 `e2/scripts/validate.py` 的 `check_request_envelope` 中写着：
 
-```json
-{
-  "job_type": "DRAFT",
-  "input": { ... }
-}
+```python
+# 请求不应携带服务端字段
+for k in ("schema_version", "job_id", "status", "output", "error"):
+    if k in doc:
+        passed &= fail(f"请求样例不应携带 {k}", str(src))
 ```
 
-按课程要求，请求侧应包含公共字段 `schema_version`、`trace_id`（`job_id`、`status` 由服务端生成，可不在请求中）。
-另外 `e2/contracts/task.schema.json` 的 `required` 只列了 4 项，未包含 `execution`。
+即贵组把 `schema_version` 归入「请求不应携带的服务端字段」。
 
-**请确认**：请求契约是否补齐 `schema_version`、`trace_id`？若有意省略，请说明理由。
+但课程对 E2 的要求是：
+
+> 公共字段（必须包含 execution）：schema_version、job_id、trace_id、job_type、status、execution、input、output、error
+
+`schema_version` 位列公共字段。B10 因此在 `dockerfile_job.req.json` 中加入了它。
+
+**请确认以哪个为准**：
+
+- **(a)** 请求侧也携带 `schema_version`（B10 现状），贵组相应放宽 `check_request_envelope`；
+- **(b)** 请求侧不携带（贵组现状），则请在贵组文档中说明课程该条如何满足。
+
+注：`trace_id` 不在贵组禁用列表内，无冲突。
 
 ### 2. 全库缺 `execution` 公共字段
 
@@ -244,33 +270,36 @@ B10 负责 DRAFT + MDFixer，贵组负责 BuildChecker + EChecker。以下只涉
 
 **请确认**：响应中的 `input` 到底填**请求副本**还是**省略**？请二选一定稿并给一个具体样例。
 
-### 4. `ENV_3002` 的语义范围
+### 4. `output` 结构：`artifacts[]` 数组 vs 裸字段
 
-`dockerfile_job_err.res.json` 用 `ENV_3002` 表示「Docker image build failed」。
+贵组 `artifact_format.md` 要求：
 
-**请确认**：`ENV_3002` 是 DRAFT 专用，还是与检测类任务共用同一语义？若共用，请给出统一的触发条件定义。
+> 每一份产物必须在 `output` 字段里给一个 URI，同时配套一份元数据
 
-### 5. DRAFT 端点与产物命名空间
+但贵组 `dockerfile_job.res.json` 用的是 `output.dockerfile_uri` / `output.image_ref` 两个**裸字段**，未配套元数据。
 
-课程约定 5 个端点：
+B10 已改为 `output.artifacts[]` 数组，每项按元数据格式并带 `sha256`。
 
-```text
-POST /v1/dockerfile-jobs
-POST /v1/full-check-jobs
-POST /v1/incremental-check-jobs
-POST /v1/repair-jobs
-GET  /v1/jobs/{job_id}
-```
+**请确认**：两组 `output` 结构是否需要统一？若贵组已按裸字段实现解析器，B10 的改动对贵组构成**破坏兼容变化**，需要重新对齐。
 
-A 组现有 OpenAPI 只覆盖 `full-check` / `incremental-check` 两类。
-另外产物 URI 使用 `artifact://pair10/...` 命名空间。
+### 5. `task.schema.json` 的 `required` 与 `output` 约束
 
-**请确认**：`artifact://pair10/` 是双组共用的命名空间，还是各组用各自的（如 `artifact://b10/`）？DRAFT 产物应挂在哪个前缀下？
+贵组 `task.schema.json` 当前 `required` 只有 4 项（`schema_version` / `job_id` / `job_type` / `status`），`trace_id`、`execution`、`input` 均未列入；`output` 声明为空 `object`，导致 `findings.type` 与产物 `type` 枚举**实际未被校验**。
 
-## B10 侧的对齐动作
+B10 已提到 7 项 required 并补上 `output` 的属性声明。**请确认**贵组是否同步。
 
-- B10 会在 `e2/contracts/dockerfile_job.*` 中补齐上述公共字段，并在 `e2/README.md` 记录**确认 / 修改 / 待议**三节。
-- B10 的 `task.schema.json` 会包含全部 9 个公共字段，四类任务对象均可表达。
+### 6. `sha256` 是可选还是必需
+
+贵组 `artifact_format.md` 标注 `sha256` 为「可选，完整性校验时使用」。B10 在 DRAFT 契约中提为**必需**（课程要求「sha256 核验完整性」）。**请确认**贵组是否同步。
+
+### 7. DRAFT 产物 `relative_path` 约定
+
+`artifact://pair10/` 已确认为双组共用。**请确认** DRAFT 产物的路径约定，B10 建议 `<job_id>/<filename>`，例如 `artifact://pair10/job-draft01/Dockerfile`。
+
+## B10 侧已做的对齐动作
+
+- B10 已在 `e2/contracts/dockerfile_job.*` 三件套中补齐 `execution`，并在 `e2/README.md` 记录**确认 / 修改 / 待议**三节（2.1 / 2.2 / 2.3）。
+- B10 的 `e2/task.schema.json` 含全部 9 个公共字段，四类任务对象均可表达，并已通过 `e2/validate.py` 的最小检查 01–04。
 - 若贵组对上述任一项有不同意见，请在本 Issue 回复，B10 会同步调整本仓库契约。
 
 ## 期望回复
@@ -288,5 +317,5 @@ A 组现有 OpenAPI 只覆盖 `full-check` / `incremental-check` 两类。
 
 1. 4 份组内 Issue 依次复制到本仓库 Issues，指派给对应成员。
 2. A 组联动正文复制到 A 组仓库 Issues，**标题严格用 `[B10] DRAFT 接口确认`**。
-3. 「已确认的 DRAFT 字段」一节在 `e2/README.md` 第 2 节定稿后回填，两处内容必须一致。
+3. 「已确认的 DRAFT 字段」一节已与 `e2/README.md` 第 2.1 节核对一致（2026-09-23）。两处内容若日后调整必须同步。
 4. 创建 Issue 后，把编号回填到 `CONTRIBUTORS.md` 的 Issue/PR 列。

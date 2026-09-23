@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "job_id": "job-draft02",
+  "trace_id": "trace-011",
+  "job_type": "DRAFT",
+  "status": "FAILED",
+  "created_at": "2026-09-23T07:10:00Z",
+  "updated_at": "2026-09-23T07:12:41Z",
+  "execution": {
+    "mode": "ASYNC",
+    "timeout_seconds": 1800,
+    "started_at": "2026-09-23T07:10:02Z",
+    "finished_at": "2026-09-23T07:12:41Z",
+    "attempt": 1,
+    "command": "docker build -t registry.local/pair10/draft02:sha-d4e5f6a .",
+    "resources": {
+      "cpu": "2",
+      "memory_mb": 2048
+    }
+  },
+  "input": {
+    "repository": {
+      "url": "git@github.com:<OWNER>/<PROJECT>.git",
+      "commit": "<C0_FULL_40_SHA>"
+    },
+    "build": {
+      "command": "make",
+      "verify_command": "make check"
+    },
+    "max_iterations": 5,
+    "options": {
+      "base_image": "ubuntu:22.04",
+      "keep_intermediate_images": false
+    }
+  },
+  "error": {
+    "code": "ENV_3002",
+    "message": "Docker image build failed",
+    "detail": {
+      "step": "RUN apt-get install -y libfoo-dev",
+      "exit_code": 100,
+      "log_uri": "artifact://pair10/job-draft02/build.log"
+    }
+  }
+}

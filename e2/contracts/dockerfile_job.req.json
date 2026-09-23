@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "trace_id": "trace-010",
+  "job_type": "DRAFT",
+  "execution": {
+    "mode": "ASYNC",
+    "timeout_seconds": 1800,
+    "resources": {
+      "cpu": "2",
+      "memory_mb": 2048
+    }
+  },
+  "input": {
+    "repository": {
+      "url": "git@github.com:<OWNER>/<PROJECT>.git",
+      "commit": "<C0_FULL_40_SHA>"
+    },
+    "build": {
+      "command": "make",
+      "verify_command": "make check"
+    },
+    "max_iterations": 5,
+    "options": {
+      "base_image": "ubuntu:22.04",
+      "keep_intermediate_images": false
+    }
+  }
+}

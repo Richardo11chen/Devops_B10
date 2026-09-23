@@ -24,13 +24,22 @@
 | 编号 | 日期 | 使用人 | 工具与模型 | 任务 | 提示摘要 | AI 建议 | 人工结论 | 理由 | 关联文件与版本 |
 |------|------|--------|-----------|------|----------|---------|----------|------|----------------|
 | AI-001 | 2026-09-23 | 组长 | Claude Code | 起草 B10 仓库骨架与文档框架 | 按课程 E2/E3 要求生成目录结构、README/CONTRIBUTORS/ADR/Backlog 框架 | 给出目录结构建议，指出 A 组 `dockerfile_job.req.json` 缺 `schema_version`、`trace_id`，且全库无 `execution` 公共字段 | 修改后采纳 | 结构可用；但字段缺失结论需在 T-002 逐条复核 A 组原文件后再定稿，未直接采信 | `README.md`、`e2/README.md` @ `<待填 SHA>` |
+| AI-002 | 2026-09-23 | 组长 | Claude Code | 逐条复核 A 组 DRAFT 契约并改写 `dockerfile_job.*` | 对照课程 9 个公共字段核对 A 组原文件，指出缺失与冲突 | 建议：请求侧补 `schema_version`/`trace_id`；`input.deadline_sec` 移入 `execution.timeout_seconds`；`output` 改为 `artifacts[]` 带 `sha256`；`task.schema.json` 的 `output` 补 `artifacts`/`findings` 属性声明 | 修改后采纳 | 字段补全与 `output` 约束采纳；但 AI 最初把「请求缺 `schema_version`」当成 A 组缺陷，实为 A 组 `validate.py` 的**有意设计**，已改写为冲突讨论项；`output` 改数组可能构成破坏兼容，已标注待 A 组确认 | `e2/task.schema.json`、`e2/contracts/dockerfile_job.*`、`e2/README.md` @ `<待填 SHA>` |
+| AI-003 | 2026-09-23 | 组长 | Claude Code | 编写并验证 `e2/validate.py` | 覆盖课程最小检查 01–04 | 初版检查 1d 拿单个 `SUCCEEDED` 样例去要求 `error` 字段，必然误报；检查 02 的预期失败被当成真失败打印 | 修改后采纳 | 两处均为 AI 自身缺陷，人工复核运行输出后发现并修正：1d 改为检查 schema 声明的字段集并对 FAILED 样例单独验证；负例改用 `expect_reject` 分支 | `e2/validate.py` @ `<待填 SHA>` |
 
 > 其余记录由各成员在完成自己任务时追加。**每人至少一条。**
 
-## 已声明待验证事项
+## 已声明待验证事项（2026-09-23 复核完毕）
 
-以下是 AI 提出、但**尚未经人工复核**的结论，复核后请更新对应行的「人工结论」与「理由」：
+AI 提出的待验证结论，已逐条回查 A 组原文：
 
-- [ ] A 组 DRAFT 请求契约缺 `schema_version`、`trace_id` 两个公共字段
-- [ ] A 组 DRAFT 响应样例中 `input` 为占位符 `{"_echo": "请求副本或省略"}`，非具体值
-- [ ] A 组 `ENV_3002` 在 DRAFT 与检测类任务间是否语义共用，需与 A 组确认
+- [x] ~~A 组 DRAFT 请求契约缺 `schema_version`、`trace_id` 两个公共字段~~
+      → **部分不成立**。缺 `schema_version`/`trace_id` 属实，但**不是疏漏**：A 组 `scripts/validate.py` 的 `check_request_envelope` 把 `schema_version` 明确列为「请求不应携带的服务端字段」，是有意为之。已改写为「课程要求与 A 组实现冲突」的讨论项（见 `issue_draft.md` 第 1 条），不再作为缺陷主张。
+- [x] ~~A 组 DRAFT 响应样例中 `input` 为占位符 `{"_echo": "请求副本或省略"}`，非具体值~~
+      → **成立**。已确认为真实问题，列为待议第 4 条（原 Issue 第 3 条）。
+- [x] ~~A 组 `ENV_3002` 在 DRAFT 与检测类任务间是否语义共用，需与 A 组确认~~
+      → **不成立，AI 判断有误**。A 组 `error_codes.md` 该行已明确标注「可能抛出的服务：DRAFT」，即 DRAFT 专用。AI 提问前未读该文件。已改为「已确认」项（2.1 第 10 条）。
+
+> **教训**：AI 在未读完 A 组全部契约文件时就提出了问题清单。
+> 其中 2 条（`ENV_3002` 语义、`pair10` 命名空间）在 A 组文档中已有明确答案，
+> 属**提问前未取证**。后续任何「A 组缺失/矛盾」的判断，必须先回查 A 组 `contracts/` 与 `docs/` 原文再下结论。
