@@ -4,7 +4,7 @@ B10 组 4 人贡献表。每人一行，**提交后必须回填 Commit SHA 与 I
 
 | 姓名 | 负责模块 | 主要文件 | Commit SHA | Issue/PR | 验证结果 |
 |------|----------|----------|------------|----------|----------|
-| 陈奕澎（组长） | E2 DRAFT 契约确认、统一任务模型、校验脚本、仓库骨架 | `e2/contracts/dockerfile_job.*`<br>`e2/task.schema.json`<br>`e2/validate.py`<br>`e2/ADR.md`<br>`e2/Backlog.md`<br>`e2/AI_USAGE.md` | `7ff92ae`<br>`c370828` | `<待填>` | 最小检查 01–04 全部通过（exit 0）；13 项变异测试全部被 schema 拒绝 |
+| 陈奕澎（组长） | E2 DRAFT 契约确认、统一任务模型、校验脚本、仓库骨架 | `e2/contracts/dockerfile_job.*`<br>`e2/task.schema.json`<br>`e2/validate.py`<br>`e2/ADR.md`<br>`e2/Backlog.md`<br>`e2/AI_USAGE.md` | `7ff92ae`<br>`c370828`<br>`685f034` | [#1](../../issues/1) | 最小检查 01–04 全部通过（exit 0）；13 项变异测试全部被 schema 拒绝 |
 | 成员B `<待填姓名>` | E2 REPAIR 契约确认 | `e2/contracts/repair_job.*` | `<待填>` | `<待填>` | `<待填>` |
 | 成员C `<待填姓名>` | E3 DRAFT 样本与 Docker 证据 | `e3/fixtures/draft/`<br>`e3/evidence/` | `<待填>` | `<待填>` | `<待填>` |
 | 成员D `<待填姓名>` | E3 MDFixer 样本与修复验证 | `e3/fixtures/mdfixer/`<br>`e3/evidence/` | `<待填>` | `<待填>` | `<待填>` |
@@ -34,8 +34,8 @@ EXIT=0
 
 | 项 | 原因 | 下一步 |
 |----|------|--------|
-| 「Issue/PR」列待填 | Issue 尚未创建 | 建完 Issue 后回填编号 |
-| 与 A 组的 7 条待议项 | 等待对方回复 | 见 `e2/README.md` 第 2.3 节 |
+| ~~「Issue/PR」列待填~~ | 已解决 | 已回填本仓库 Issue [#1](../../issues/1) |
+| 与 A 组的 7 条待议项 | 等待对方回复 | 已提 [ana12-21/Devops_G10#2](https://github.com/ana12-21/Devops_G10/issues/2)；见 `e2/README.md` 第 2.3 节 |
 | 成员B/C/D 的贡献行 | 待其本人完成 | 各自完成后回填 SHA 与验证结果 |
 | 分支 / PR 流程 | 暂缓决定 | 成员分支名已写在 `e2/issue_draft.md` |
 

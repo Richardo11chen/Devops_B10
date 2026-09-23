@@ -60,7 +60,8 @@ B 组负责 **DRAFT** 与 **MDFixer** 两个服务的接口约定。E2 **不部�
 
 ### 2.3 还需与 A 组讨论什么
 
-按优先级排列，同步写入 `issue_draft.md` 的 A 组联动正文。
+按优先级排列。以下 7 条已提为 A 组仓库 Issue **[ana12-21/Devops_G10#2](https://github.com/ana12-21/Devops_G10/issues/2)**，
+正文见 `issue_draft.md` 的「向 A 组提 Issue 的正文」一节。**B10 不直接修改 A 组仓库**，只通过该 Issue 沟通。
 
 | # | 问题 | 冲突点 | B 组倾向 |
 |---|------|--------|----------|
