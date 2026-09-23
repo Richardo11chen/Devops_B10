@@ -4,10 +4,42 @@ B10 组 4 人贡献表。每人一行，**提交后必须回填 Commit SHA 与 I
 
 | 姓名 | 负责模块 | 主要文件 | Commit SHA | Issue/PR | 验证结果 |
 |------|----------|----------|------------|----------|----------|
-| 组长 `<待填姓名>` | E2 DRAFT 契约确认、统一任务模型、校验脚本、仓库骨架 | `e2/contracts/dockerfile_job.*`<br>`e2/task.schema.json`<br>`e2/validate.py`<br>`e2/ADR.md`<br>`e2/Backlog.md`<br>`e2/AI_USAGE.md` | `<待填>` | `<待填>` | `<待填>` |
+| 陈奕澎（组长） | E2 DRAFT 契约确认、统一任务模型、校验脚本、仓库骨架 | `e2/contracts/dockerfile_job.*`<br>`e2/task.schema.json`<br>`e2/validate.py`<br>`e2/ADR.md`<br>`e2/Backlog.md`<br>`e2/AI_USAGE.md` | `7ff92ae`<br>`c370828` | `<待填>` | 最小检查 01–04 全部通过（exit 0）；13 项变异测试全部被 schema 拒绝 |
 | 成员B `<待填姓名>` | E2 REPAIR 契约确认 | `e2/contracts/repair_job.*` | `<待填>` | `<待填>` | `<待填>` |
 | 成员C `<待填姓名>` | E3 DRAFT 样本与 Docker 证据 | `e3/fixtures/draft/`<br>`e3/evidence/` | `<待填>` | `<待填>` | `<待填>` |
 | 成员D `<待填姓名>` | E3 MDFixer 样本与修复验证 | `e3/fixtures/mdfixer/`<br>`e3/evidence/` | `<待填>` | `<待填>` | `<待填>` |
+
+## 组长完成记录
+
+**已完成内容**：仓库骨架、DRAFT 契约确认、统一任务模型、最小检查脚本、ADR-001、成员任务模板与 Issue 草稿。
+
+| commit | 内容 |
+|--------|------|
+| `7ff92ae` | init: 建立 B10 仓库骨架与 E2/E3 文档框架 |
+| `c370828` | e2: 确认 DRAFT 契约并补齐 execution 公共字段 |
+
+**验证结果**：
+
+```bash
+$ python3 e2/validate.py
+task.schema.json 已加载（required=7 项，properties=11 项）
+...
+最小检查 01–04 全部通过。
+EXIT=0
+```
+
+另做 **13 项变异测试**（删 `execution`、`sha256` 位数不足、产物 `type` 越界、`SUCCEEDED` 缺 `output`、`error.code` 格式错、`execution.attempt=0` 等），**全部被 `task.schema.json` 拒绝** —— 证明校验通过不是因为约束太松，schema 不是空壳。
+
+**未完成项 / 下一步**：
+
+| 项 | 原因 | 下一步 |
+|----|------|--------|
+| 「Issue/PR」列待填 | Issue 尚未创建 | 建完 Issue 后回填编号 |
+| 与 A 组的 7 条待议项 | 等待对方回复 | 见 `e2/README.md` 第 2.3 节 |
+| 成员B/C/D 的贡献行 | 待其本人完成 | 各自完成后回填 SHA 与验证结果 |
+| 分支 / PR 流程 | 暂缓决定 | 成员分支名已写在 `e2/issue_draft.md` |
+
+---
 
 ## 填写要求
 

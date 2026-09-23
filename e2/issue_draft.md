@@ -4,13 +4,17 @@
 
 **建议分支名规则**：`<角色>/<范围>`，角色用 `lead` / `memberB` / `memberC` / `memberD`。
 
+> Issue 1 的组长工作**未开分支**，直接提交到 `main`。Issues 2 / 3 / 4 是待办任务，
+> 其中的分支名是成员需要**新建**的分支。
+
 ---
 
 ## Issue 1
 
 **标题**：`[B10][组长] 初始化仓库与 DRAFT 契约确认`
 
-**建议分支名**：`lead/e2-draft-contract`
+**状态**：✅ **已完成**（2026-09-23）。未开分支，直接提交到 `main`。
+建好后可直接 Close，作为完成记录留档。
 
 ### 目标
 
@@ -33,16 +37,30 @@
 
 ### 验收条件
 
-- [ ] 目录结构与课程要求一致，README 四项内容齐全
-- [ ] `dockerfile_job.*` 含全部 9 个公共字段，`execution` 与 `input`/`output`/`error` 并列
-- [ ] `e2/README.md` 三节无 `待填`
-- [ ] ADR-001 四段（Context / Alternatives / Decision / Consequences）齐全
-- [ ] `python3 e2/validate.py` 最小检查 01–04 全部通过
-- [ ] 明确写出系统执行错误入 `job.error`、正常分析发现入 `ERROR_REPORT.findings` 的边界
+- [x] 目录结构与课程要求一致，README 四项内容齐全
+- [x] `dockerfile_job.*` 含全部 9 个公共字段，`execution` 与 `input`/`output`/`error` 并列
+- [x] `e2/README.md` 三节无 `待填`
+- [x] ADR-001 四段（Context / Alternatives / Decision / Consequences）齐全
+- [x] `python3 e2/validate.py` 最小检查 01–04 全部通过
+- [x] 明确写出系统执行错误入 `job.error`、正常分析发现入 `ERROR_REPORT.findings` 的边界
+
+### 完成情况
+
+**分支**：未开分支，直接提交到 `main`。
+
+| commit | 内容 |
+|--------|------|
+| `7ff92ae` | init: 建立 B10 仓库骨架与 E2/E3 文档框架 |
+| `c370828` | e2: 确认 DRAFT 契约并补齐 execution 公共字段 |
+
+**验证结果**：`python3 e2/validate.py` → 最小检查 01–04 全部通过，退出码 0。
+另做 13 项变异测试（删 `execution`、`sha256` 位数不足、产物 `type` 越界、`SUCCEEDED` 缺 `output` 等），
+全部被 schema 拒绝，确认校验不是因为约束太松而全过。
 
 ### 备注
 
 **不部署 API**。不修改 A 组仓库。全部命令在 Linux 下运行。
+后续待议项（与 A 组）：见 `e2/README.md` 第 2.3 节，共 7 条。
 
 ---
 
