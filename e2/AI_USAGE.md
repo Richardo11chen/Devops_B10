@@ -26,6 +26,7 @@
 | AI-001 | 2026-09-23 | 组长 | Claude Code | 起草 B10 仓库骨架与文档框架 | 按课程 E2/E3 要求生成目录结构、README/CONTRIBUTORS/ADR/Backlog 框架 | 给出目录结构建议，指出 A 组 `dockerfile_job.req.json` 缺 `schema_version`、`trace_id`，且全库无 `execution` 公共字段 | 修改后采纳 | 结构可用；但字段缺失结论需在 T-002 逐条复核 A 组原文件后再定稿，未直接采信 | `README.md`、`e2/README.md` @ `<待填 SHA>` |
 | AI-002 | 2026-09-23 | 组长 | Claude Code | 逐条复核 A 组 DRAFT 契约并改写 `dockerfile_job.*` | 对照课程 9 个公共字段核对 A 组原文件，指出缺失与冲突 | 建议：请求侧补 `schema_version`/`trace_id`；`input.deadline_sec` 移入 `execution.timeout_seconds`；`output` 改为 `artifacts[]` 带 `sha256`；`task.schema.json` 的 `output` 补 `artifacts`/`findings` 属性声明 | 修改后采纳 | 字段补全与 `output` 约束采纳；但 AI 最初把「请求缺 `schema_version`」当成 A 组缺陷，实为 A 组 `validate.py` 的**有意设计**，已改写为冲突讨论项；`output` 改数组可能构成破坏兼容，已标注待 A 组确认 | `e2/task.schema.json`、`e2/contracts/dockerfile_job.*`、`e2/README.md` @ `<待填 SHA>` |
 | AI-003 | 2026-09-23 | 组长 | Claude Code | 编写并验证 `e2/validate.py` | 覆盖课程最小检查 01–04 | 初版检查 1d 拿单个 `SUCCEEDED` 样例去要求 `error` 字段，必然误报；检查 02 的预期失败被当成真失败打印 | 修改后采纳 | 两处均为 AI 自身缺陷，人工复核运行输出后发现并修正：1d 改为检查 schema 声明的字段集并对 FAILED 样例单独验证；负例改用 `expect_reject` 分支 | `e2/validate.py` @ `<待填 SHA>` |
+| AI-004 | 2026-09-24 | 成员C | Antigravity / Gemini 3.8 Flash | E3 DRAFT 样本准备与 Docker 双层判据证据记录 | 要求构造 Dockerfile.broken 与 Dockerfile.reference 两个候选样本，满足两层判据，并生成规范命名的证据文件 | AI 建议在 broken 候选中使用畸变指令注入故障，且起初仅设计记录构建日志 | 修改后采纳 | 拒绝人工造假指令，严格按课程要求基于 `python:3.13-slim` 自然触发 `make: not found`；且严格落实双层判据，补充第二层容器内 `./hello` 功能验证输出与退出码证据 | `e3/fixtures/draft/*`、`e3/evidence/*` @ `b2c38a8` |
 
 > 其余记录由各成员在完成自己任务时追加。**每人至少一条。**
 
