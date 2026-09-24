@@ -5,7 +5,7 @@ B10 组 4 人贡献表。每人一行，**提交后必须回填 Commit SHA 与 I
 | 姓名 | 负责模块 | 主要文件 | Commit SHA | Issue/PR | 验证结果 |
 |------|----------|----------|------------|----------|----------|
 | 陈奕澎（组长） | E2 DRAFT 契约确认、统一任务模型、校验脚本、仓库骨架 | `e2/contracts/dockerfile_job.*`<br>`e2/task.schema.json`<br>`e2/validate.py`<br>`e2/ADR.md`<br>`e2/Backlog.md`<br>`e2/AI_USAGE.md` | `7ff92ae`<br>`c370828`<br>`685f034` | [#1](../../issues/1) | 最小检查 01–04 全部通过（exit 0）；13 项变异测试全部被 schema 拒绝 |
-| 成员B `<待填姓名>` | E2 REPAIR 契约确认 | `e2/contracts/repair_job.*` | `<待填>` | `<待填>` | `<待填>` |
+| 成员B `<待填姓名>` | E2 REPAIR 契约确认 | `e2/contracts/repair_job.*`<br>`e2/README.md` 第 6 节<br>`e2/ADR.md` ADR-002 | `<待填 SHA>` | [#2](../../issues/2) | `python3 e2/validate.py` → 最小检查 01–04 全部通过（EXIT=0），`repair_job.*` 三处由 `SKIP` 变 `OK`；34 项变异测试全部被 schema 拒绝 |
 | 成员C `<待填姓名>` | E3 DRAFT 样本与 Docker 证据 | `e3/fixtures/draft/`<br>`e3/evidence/` | `<待填>` | `<待填>` | `<待填>` |
 | 成员D `<待填姓名>` | E3 MDFixer 样本与修复验证 | `e3/fixtures/mdfixer/`<br>`e3/evidence/` | `<待填>` | `<待填>` | `<待填>` |
 
@@ -38,6 +38,40 @@ EXIT=0
 | 与 A 组的 7 条待议项 | 等待对方回复 | 已提 [ana12-21/Devops_G10#2](https://github.com/ana12-21/Devops_G10/issues/2)；见 `e2/README.md` 第 2.3 节 |
 | 成员B/C/D 的贡献行 | 待其本人完成 | 各自完成后回填 SHA 与验证结果 |
 | 分支 / PR 流程 | 暂缓决定 | 成员分支名已写在 `e2/issue_draft.md` |
+
+---
+
+## 成员B 完成记录
+
+**已完成内容**：E2 REPAIR（MDFixer）契约确认 —— 新增 `repair_job.req.json` / `repair_job.res.json` / `repair_job_err.res.json`，并在 `e2/README.md` 第 6 节写清确认 / 修改 / 待议与 8 条差异点，补 ADR-002。
+
+| commit | 内容 |
+|--------|------|
+| `<待填>` | e2: 确认 REPAIR 契约并补 trace_id / execution / 产物枚举对齐 |
+
+**验证结果**：
+
+```bash
+$ python3 e2/validate.py
+...
+    OK    repair_job.res.json 通过（status=SUCCEEDED）
+    OK    repair_job_err.res.json 通过（status=FAILED）
+    OK    repair_job.req.json
+...
+最小检查 01–04 全部通过。
+EXIT=0
+```
+
+另做 **34 项变异测试**（删 `execution`、`resources.cpu` 改整数、产物 `type` 改 `VERIFY_LOG`、`sha256` 截短、`FAILED` 删 `error`、请求携带 `status` 等），**全部被 `task.schema.json` / `check_request` 拒绝**。
+
+**未完成项 / 下一步**：
+
+| 项 | 原因 | 下一步 |
+|----|------|--------|
+| 本行姓名与 Commit SHA | 待提交后回填 | 提交完成后填入 |
+| 与 A 组 / 组长的 10 条待议项 | 涉及 `task.schema.json`（组长文件）与 A 组仓库，成员B 无权单方面修改 | 见 `e2/README.md` 第 6.3 节 |
+| Linux 环境复跑 | 本机无 WSL | 合并到 `main` 前在 Linux 重跑 `validate.py` 并替换环境标注 |
+| 请求侧 `schema_version` 冲突 | 与 A 组实现直接冲突 | 沿用 `e2/README.md` 2.3 第 1 条，等 A 组定夺 |
 
 ---
 

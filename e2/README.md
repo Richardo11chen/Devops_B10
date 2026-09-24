@@ -166,4 +166,125 @@ EXIT=0
 
 **反空壳验证**：对 `dockerfile_job.res.json` 做 13 项变异（删 `execution`、`sha256` 位数不足、产物 `type` 越界、`error.code` 格式错、`SUCCEEDED` 缺 `output` 等），全部被 schema 拒绝 —— 证明校验不是因为约束太松而"全过"。
 
-`repair_job.*` 由成员B 产出后，`validate.py` 会自动纳入检查（现以 `SKIP` 跳过），无需改动脚本。
+`repair_job.*` 已由成员B 产出，`validate.py` 自动纳入检查，无需改动脚本——原先的三处 `SKIP` 现为 `OK`，见第 6.5 节。
+
+## 6. REPAIR 契约确认结论（成员B）
+
+> **Issue**：[#2](../../issues/2) ｜ **分支**：`memberB/e2-repair-contract`
+> **核对对象**：A 组 `ana12-21/Devops_G10` main HEAD **`fec3fbe`**（2026-09-24 抓取）。此前第 2 节记录的基线 `7720a30` 已过时，A 组 main 已前移 18 个提交。
+> **说明**：A 组仓库 `e2/contracts/` 中**已存在** `repair_job.*` 三件套，故本节与第 2 节（DRAFT）同构，是**确认 / 修改**而非凭空设计。
+
+REPAIR 对应 **MDFixer（修复）** 服务，是四类任务中唯一会**改写代码**的一类。
+
+### 6.1 B 组确认了哪些 REPAIR 字段
+
+逐条核对 A 组仓库 `e2/contracts/repair_job.*` 与 `docs/` 原文（基线 `fec3fbe`）。
+
+| # | 字段 / 约定 | A 组约定 | B 组结论 | 依据 |
+|---|-------------|----------|----------|------|
+| 1 | `job_type` | `"REPAIR"` | ✅ 确认 | 四类枚举之一 |
+| 2 | `input.repository.{url, commit}` | git URL + 完整 40 位 SHA | ✅ 确认 | 与 DRAFT 一致；补丁必须能 `git apply` 到该 commit |
+| 3 | `input.build.{command, verify_command}` | `make` / `make check` | ✅ 确认 | 修复后必须重跑这两层判据 |
+| 4 | **跨 Job 输入** `input.md_report_uri` | 引用 FULL_CHECK 的检测报告产物 | ✅ 确认 | A 组 `md_report.sample.json` 的 `_consumed_by` 明确标注「B10 MDFixer 消费」 |
+| 5 | **只消费 `MISSING`** | `REDUNDANT` 不由 MDFixer 处理 | ✅ 确认 | A 组 `md_report.sample.json` 注明「B 组只应消费 type=MISSING」；`docs/practice_log.md` 约定 REDUNDANT 由 A 组下次处理 |
+| 6 | 状态枚举六态 | `QUEUED`→`RUNNING`→`SUCCEEDED`/`FAILED`/`TIMED_OUT`/`CANCELLED` | ✅ 确认 | 与课程一致 |
+| 7 | 错误对象三字段 | `code` / `message` / `detail` | ✅ 确认 | `error_codes.md`「固定字段」一节 |
+| 8 | 产物元数据字段 | `artifact_id` / `type` / `uri` / `media_type` / `producer_job_id` / `sha256` | ✅ 确认 | `artifact_format.md` |
+| 9 | 产物统一走 `output.artifacts[]` | A 组 commit `84f892f`：「四类任务统一通过 `output.artifacts[]` 提供产物，不再使用响应 output 中的产物裸字段」 | ✅ 确认 | A 组已按 B10 Issue 议题 4 改定；本组 REPAIR 产物一律列于 `artifacts[]` |
+| 10 | 响应 `input` 填**请求副本** | A 组 commit `f541856`：「响应中的 `input` 定稿为创建请求的 `input` 副本」 | ✅ 确认 | A 组已按 B10 Issue 议题 3 改定；本组三件套按此填写 |
+| 11 | 产物 URI 格式 | `artifact://<pair_id>/<job_id>/<relative_path>`，`pair_id = pair10` | ✅ 确认 | `artifact_format.md`；`relative_path` 以 `<job_id>/<filename>` 开头 |
+| 12 | **REPAIR 专用失败码** | `EXEC_4003` = 候选 patch 全部失败 | ✅ 确认 | `error_codes.md` 该行标注「可能抛出的服务：MDFixer」 |
+| 13 | 修复补丁产物类型 | `GIT_PATCH` | ✅ 确认 | `artifact_format.md` 中 B 组产物类型之一 |
+
+### 6.2 B 组修改了什么
+
+A 组现有 `repair_job.*` **不能原样搬入本仓库**：用本仓库 `task.schema.json` 与 `validate.py` 实测，三份样例共 **7 处不合规**。下表逐条列出改动与理由。
+
+| # | 位置 | A 组原样 | B 组改为 | 理由 |
+|---|------|----------|----------|------|
+| 1 | `repair_job.req.json` | 仅 `schema_version` / `job_type` / `input` 三键 | 补 `trace_id`、`execution` | 本仓库 `validate.py` 的 `check_request` 要求请求携带 `trace_id`；B 组 DRAFT 请求已携带 `execution`，四类任务保持一致 |
+| 2 | `execution.resources.cpu` | 整数 `2` | 字符串 `"2"` | 本仓库 `task.schema.json` 定义 `cpu` 为 `string`（可表达 `"0.5"` / `"2000m"`）；A 组为 `integer`，属待议项（6.3 第 2 条） |
+| 3 | 产物 `type` | `VERIFY_LOG` | `BUILD_LOG` | 本仓库产物枚举 8 项中**无** `VERIFY_LOG`；DRAFT 契约已用 `BUILD_LOG` 承载 `verify.log`，沿用同一口径、**不动 `task.schema.json`**（6.3 第 1 条） |
+| 4 | `repair_job_err.res.json` | 无 `execution` | 补 `execution`（含 `attempt: 3`） | 本仓库把 `execution` 列入 `required`；`attempt: 3` 同时表达「已试过 3 个候选」，与 6.4 第 4 条的迭代语义一致 |
+| 5 | 失败码 | `EXEC_4002` + `FAILED` | `EXEC_4003` + `FAILED` | A 组**自家** `error_codes.md` 中 `EXEC_4003` 才是「候选 patch 全部失败（MDFixer）」，`EXEC_4002` 对应 `TIMED_OUT`；原样例与自家错误码表自相矛盾 |
+| 6 | `options.style_hint` | `"preserve-tab-indent"` | 枚举 `"TARGET"` | A 组取值与 E3 成员D 的四种声明风格（Target / Macro / Hybrid / Implicit）**不是同一套分类**；契约须与 E3 基线对齐 |
+| 7 | `output` 结构 | 无修复语义字段 | 新增 `patch_meta` / `applied_findings` / `rejected_candidates` / `recheck` / `stats` | 候选迭代与「修完必须重验」需要机器可读的表达；`output` 未封闭额外键，可安全扩展 |
+
+> 第 6 条另需说明：A 组原值描述的是**缩进风格**（tab / 空格），而 E3 要区分的是**声明写法**（显式规则 / 宏 / 混合 / 隐式规则）。两者不是同一维度，本组按 E3 口径枚举化。
+
+### 6.3 还需与 A 组 / 组长讨论什么
+
+按优先级排列。第 1–5、9 条涉及 `task.schema.json`（**组长文件**），B 组**未自行修改**，一律走 Issue。
+
+| # | 问题 | 冲突点 | B 组倾向 |
+|---|------|--------|----------|
+| 1 | 产物 `type` 是否补 `VERIFY_LOG` | A 组枚举含 `VERIFY_LOG` / `ERROR_REPORT`，本仓库 8 项无 | 本组先用 `BUILD_LOG` 承载 `verify.log`，**不动 schema**；若要独立类型请组长裁决 |
+| 2 | `execution.resources.cpu` 类型 | A 组 `integer`，本仓库 `string` | 统一为 `string`（可表达小数与 Kubernetes 风格 `"2000m"`） |
+| 3 | `execution` 是否进 `required` | A 组 `required` 不含 `execution`，本仓库含 | 保留本组「必填」；A 组失败样例因此缺 `execution`，需 A 组补齐 |
+| 4 | `execution.attempt` 是否提必填 | A 组 `[mode, attempt]`，本仓库 `[mode]` | REPAIR 靠 `attempt` 表达候选轮次，**建议提为必填**（需组长改 schema） |
+| 5 | `required` 项次是否取并集 | A 组含 `created_at`，本仓库含 `execution` | 请组长裁定是否合并为 8 项；本组样例已同时携带两者，两种口径均可通过 |
+| 6 | `trace_id` 是否加 `pattern` | A 组 `^trace-[a-z0-9-]+$`，本仓库仅 `minLength: 1` | 无实质冲突，本组可跟进 |
+| 7 | `artifact` 的 `media_type` / `sha256` 是否必填 | A 组两者必填，本仓库为可选 | 本组 REPAIR 产物已一律携带；是否提为 schema 必填请组长裁定 |
+| 8 | **修复器自身崩溃**用哪个错误码 | `ANALYSIS_5001` 的「可能抛出的服务」列表**不含 MDFixer** | 本组无码可用；请 A 组把 MDFixer 写入该行，或新增 `ANALYSIS_5002` |
+| 9 | 请求侧是否携带 `schema_version` | 与第 2.3 节第 1 条同源 | 沿用 2.3 结论，等 A 组定夺 |
+| 10 | REPAIR 超时样例是否另立 | A 组原样例把超时与候选全败混为一谈 | 本组 `repair_job_err.res.json` 只承载「候选全败」（`EXEC_4003`）；超时应为 `EXEC_4002` + `status=TIMED_OUT`，是否补一份样例请 A 组确认 |
+
+### 6.4 REPAIR 与其余三类的差异点
+
+验收要求「差异点逐条写明理由」，共 8 条。
+
+| # | 差异点 | REPAIR | 其余三类 | 理由 |
+|---|--------|--------|----------|------|
+| 1 | **唯一会改写代码** | 产出 `GIT_PATCH`，是对项目的真实修改 | DRAFT 产出运行环境，检测类只读产出报告 | 修复是唯一带「副作用」的任务，补丁必须可 `git apply` 且绑定具体 commit |
+| 2 | **唯一以「别的 Job 的产物」为输入** | `input.md_report_uri` 引用 FULL_CHECK 的检测报告 | 另三类输入都是仓库 + 构建命令 | 需要跨 Job 的产物引用链，`sha256` 是这条链的完整性保证 |
+| 3 | **只消费 `MISSING`** | `REDUNDANT` 必须过滤掉，不进修复路径 | 检测类两类发现都产出 | 冗余依赖删除属另一类改动，A 组 `practice_log.md` 已约定由其自身处理 |
+| 4 | **迭代单位不同** | 迭代的是**候选 patch**，`execution.attempt` = 候选轮次 | DRAFT 迭代的是 **Dockerfile 修订** | 同名字段在两类任务里语义不同，故用 `output.rejected_candidates` 与被接受候选对照记录 |
+| 5 | **失败码不同** | `EXEC_4003`（候选全败，REPAIR 专用） | DRAFT 用 `ENV_3002`（镜像构建失败） | 「候选全败」≠「环境构建失败」，两者排查动作完全不同 |
+| 6 | **双重验证** | 补丁应用后必须重跑 build + verify，结果写入 `output.recheck` | DRAFT 只有一次 `final_verify` | 修复的判据是「改完之后还成立」，不能沿用修复前的旧结论 |
+| 7 | **`style_hint` 是独有维度** | 声明风格（Target / Macro / Hybrid / Implicit） | DRAFT 用 `base_image` 等环境选项 | 修复风格直接对应 E3 成员D 的四种风格与 Target 参考 Patch |
+| 8 | **幂等性要求更高** | 补丁须能 `git apply --check` 到指定 commit（`patch_meta.applies_cleanly`） | —— | 修复产物要能被 A 组或人工在固定版本上原样复现 |
+
+### 6.5 验证方式
+
+**1. 契约校验（三处 `SKIP` → `OK`）**
+
+```bash
+python3 e2/validate.py
+```
+
+运行结果（2026-09-24，Python 3.13.12 / jsonschema 4.26.0）：
+
+```text
+task.schema.json 已加载（required=7 项，properties=11 项）
+...
+    OK    dockerfile_job.res.json 通过（status=SUCCEEDED）
+    OK    dockerfile_job_err.res.json 通过（status=FAILED）
+    OK    repair_job.res.json 通过（status=SUCCEEDED）
+    OK    repair_job_err.res.json 通过（status=FAILED）
+    OK    dockerfile_job.req.json
+    OK    repair_job.req.json
+...
+最小检查 01–04 全部通过。
+EXIT=0
+```
+
+> 环境说明：`validate.py` 只依赖 Python 标准库与 `jsonschema`，与操作系统无关。本组在 **Windows 11 + Git Bash** 下取得上述输出（本机无 WSL）。
+> 课程要求 Linux 环境，**合并到 `main` 前需在 Linux 下复跑一次**并替换本段输出与执行环境标注。
+
+**2. 反空壳变异测试（34 项）**
+
+沿用组长对 DRAFT 的做法，对 REPAIR 三件套逐项破坏，**每一项都必须被拒绝**，证明校验通过不是约束太松：
+
+| 变异类别 | 项数 | 示例 | 结果 |
+|----------|------|------|------|
+| 响应侧（完整 schema） | 19 | 删 `execution`、`status` 改 `BOGUS`、`SUCCEEDED` 删 `output`、`resources.cpu` 改整数、`attempt` 改 `0`、产物 `type` 改 `VERIFY_LOG`、`sha256` 截短/含大写、URI 非 `artifact://pair10/` 协议 | 全部被拒绝 |
+| 失败侧 | 6 | `FAILED` 删 `error`、`error.code` 改 `exec4003`、`error` 缺 `message`、删 `execution` | 全部被拒绝 |
+| 请求侧（`check_request` 规则） | 9 | 请求携带 `status`/`job_id`/`output`/`error`、删 `trace_id`、`job_type` 改 `ABC`、`execution.mode` 改 `BOGUS` | 全部被拒绝 |
+
+```text
+合计 34 项：被拒绝 34，漏网 0
+```
+
+**3. 与 A 组的产物衔接**
+
+`input.md_report_uri` 指向 FULL_CHECK 的 `ERROR_REPORT`；`output.applied_findings` 只回填 `type = "MISSING"` 的条目，与 A 组 `md_report.sample.json` 的 `findings` 逐条对应。
