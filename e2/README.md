@@ -378,6 +378,41 @@ EXIT=0
 
 > 说明：三类变异分别走**两条不同校验路径** —— 响应/失败侧走 `task.schema.json` 完整校验，请求侧走 `validate.py` 的 `check_request` 请求侧规则（请求不携带服务端字段）。因此 34 项同时证明了 **schema 不是空壳** 与 **请求侧规则不是空壳**。
 
-**3. 与 A 组的产物衔接**
+**3. 必要字段删除自测（`validate.py` 直报）**
+
+上面 34 项走的是脚本化路径；这里再给一次**原文件级**的直白复现：从 `repair_job.res.json` 中删掉公共字段 `trace_id`（删除前取值 `"trace-020"`），直接在仓库根运行校验脚本。
+
+```text
+$ python3 e2/validate.py
+    OK    dockerfile_job_err.res.json 通过（status=FAILED）
+    FAIL  repair_job.res.json 未通过：["<root>: 'trace_id' is a required property"]
+    OK    repair_job_err.res.json 通过（status=FAILED）
+    OK    repair_job.req.json
+...
+结论
+未通过 1 项：
+  - repair_job.res.json 未通过：["<root>: 'trace_id' is a required property"]
+
+$ echo $?
+1
+```
+
+该自测确认三件事：① 三件套**确实被脚本读取并逐份校验**，不是被 `SKIP` 跳过；② 公共字段缺失会**指名报出**，并被计入「未通过」清单；③ 报错定位到具体文件与字段，**无须改动校验脚本**。自测后文件已按 `sha256` 逐字节还原（恢复后哈希与删除前一致），仓库状态仍为 `EXIT=0`。
+
+> 环境说明：本次自测在 Windows 11 + Git Bash（Python 3.13.12 / jsonschema 4.26.0）下取得；第 1、2 节的 Linux 实测已证明两者结论逐项一致。如需 Linux 侧原文，可在 WSL 中执行：
+>
+> ```bash
+> python3 - <<'PY'
+> import json, pathlib
+> p = pathlib.Path('e2/contracts/repair_job.res.json')
+> d = json.loads(p.read_text(encoding='utf-8'))
+> d.pop('trace_id')
+> p.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding='utf-8')
+> PY
+> python3 e2/validate.py; echo "EXIT=$?"
+> git restore e2/contracts/repair_job.res.json   # 自测后还原，务必执行
+> ```
+
+**4. 与 A 组的产物衔接**
 
 `input.md_report_uri` 指向 FULL_CHECK 的 `ERROR_REPORT`；`output.applied_findings` 只回填 `type = "MISSING"` 的条目，与 A 组 `md_report.sample.json` 的 `findings` 逐条对应。
