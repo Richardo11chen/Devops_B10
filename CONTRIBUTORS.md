@@ -68,7 +68,7 @@ EXIT=0
 
 | 项 | 原因 | 下一步 |
 |----|------|--------|
-| 本行姓名与 Commit SHA | 待提交后回填 | 提交完成后填入 |
+| ~~本行姓名与 Commit SHA~~ | 已解决 | 已回填姓名「张少逸」与 `e74af37` |
 | 与 A 组 / 组长的 10 条待议项 | 涉及 `task.schema.json`（组长文件）与 A 组仓库，成员B 无权单方面修改 | 见 `e2/README.md` 第 6.3 节 |
 | Linux 环境复跑 | 本机无 WSL | 合并到 `main` 前在 Linux 重跑 `validate.py` 并替换环境标注 |
 | 请求侧 `schema_version` 冲突 | 与 A 组实现直接冲突 | 沿用 `e2/README.md` 2.3 第 1 条，等 A 组定夺 |
