@@ -252,38 +252,131 @@ A 组现有 `repair_job.*` **不能原样搬入本仓库**：用本仓库 `task.
 python3 e2/validate.py
 ```
 
-运行结果（2026-09-24，Python 3.13.12 / jsonschema 4.26.0）：
+运行结果（2026-09-24，**Ubuntu 22.04.5 LTS（WSL2, x86_64）** / Python 3.10.12 / jsonschema 3.2.0）：
 
 ```text
+$ python3 e2/validate.py
+E2 契约校验（B10）
+Schema: e2/task.schema.json
 task.schema.json 已加载（required=7 项，properties=11 项）
-...
+
+====================================================================
+01  四类任务的有效请求与响应样例全部通过 task.schema.json
+====================================================================
+    OK    内置响应样例 DRAFT 通过（job_id=job-draft）
+    OK    内置响应样例 FULL_CHECK 通过（job_id=job-fullcheck）
+    OK    内置响应样例 INCREMENTAL_CHECK 通过（job_id=job-incrementalcheck）
+    OK    内置响应样例 REPAIR 通过（job_id=job-repair）
+    OK    内置请求样例 DRAFT
+    OK    内置请求样例 FULL_CHECK
+    OK    内置请求样例 INCREMENTAL_CHECK
+    OK    内置请求样例 REPAIR
     OK    dockerfile_job.res.json 通过（status=SUCCEEDED）
     OK    dockerfile_job_err.res.json 通过（status=FAILED）
     OK    repair_job.res.json 通过（status=SUCCEEDED）
     OK    repair_job_err.res.json 通过（status=FAILED）
     OK    dockerfile_job.req.json
     OK    repair_job.req.json
-...
+    OK    9 个公共字段齐全：schema_version、job_id、trace_id、job_type、status、execution、input、output、error
+    OK    error 字段可用：FAILED 样例携带 error 通过校验
+    OK    可选字段 output / error / created_at / updated_at 均已声明
+    OK    execution 时间字段均为 ISO8601 UTC
+
+====================================================================
+02  job_type 改成 ABC，应被拒绝
+====================================================================
+    OK    已拒绝，理由：job_type: 'ABC' is not one of ['DRAFT', 'FULL_CHECK', 'INCREMENTAL_CHECK', 'REPAIR']
+    OK    job_type=ABC 请求 已被拒绝（预期）：job_type='ABC' 不在四类枚举内
+
+====================================================================
+03  删除 INCREMENTAL_CHECK 的 baseline，应被拒绝
+====================================================================
+    OK    已拒绝，理由：input: 'baseline' is a required property
+          （被删除的 baseline 内容：{"commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "configuration_id": "cc-MODE0", "actual_graph_uri": "artifact://pair10/job-fullcheck/actual.json"}）
+    OK    补回 baseline 后重新通过，确认拒绝原因就是 baseline 缺失
+
+====================================================================
+04  MD ≠ 工具执行失败；error 与 findings 互斥
+====================================================================
+
+    三种情形必须分清：
+
+    | 情形           | status      | job.error      | output.findings | 含义                     |
+    |----------------|-------------|----------------|-----------------|--------------------------|
+    | 检测到缺失依赖 | SUCCEEDED   | 空             | 有（MISSING）   | 工具正常完成，发现了问题 |
+    | 分析器崩溃     | FAILED      | ANALYSIS_5001  | 空              | 工具失败了，结论不可信   |
+    | 两者同存       | ——          | 有             | 有              | 非法：无法判断成功还是失败 |
+
+    OK    检测出 MISSING 的任务是合法 SUCCEEDED —— 发现数 > 0 不等于任务失败
+    OK    findings.type 只接受 MISSING / REDUNDANT
+    OK    error 与 findings 同存已被判定非法（互斥约束生效）
+    OK    只有 error、没有 findings 的失败任务是合法的
+
+====================================================================
+结论
+====================================================================
 最小检查 01–04 全部通过。
 EXIT=0
 ```
 
-> 环境说明：`validate.py` 只依赖 Python 标准库与 `jsonschema`，与操作系统无关。本组在 **Windows 11 + Git Bash** 下取得上述输出（本机无 WSL）。
-> 课程要求 Linux 环境，**合并到 `main` 前需在 Linux 下复跑一次**并替换本段输出与执行环境标注。
+> 环境说明：上述输出取自 **Linux 环境（Ubuntu 22.04.5 LTS / WSL2, x86_64）**，Python 3.10.12 + jsonschema 3.2.0，**满足课程「所有命令必须在 Linux 下运行」的要求**。
+> 需注意：仓库 [`README.md`](../README.md) 记录的本组验证环境为 **Ubuntu 24.04.3 LTS（Python 3.12.3）**，第 5 节的 DRAFT 结论即出自该环境；本次 REPAIR 复跑使用的是另一台 WSL 发行版 **Ubuntu 22.04.5**。**两套 Linux 发行版下输出一致**，故本节结论不依赖具体发行版版本。
+> `validate.py` 只依赖 Python 标准库与 `jsonschema`。同一套契约文件另在 Python 3.13.12 + jsonschema 4.26.0（Windows 11 + Git Bash）下复跑，结果与上表**逐项一致** —— 说明校验结论与操作系统、与 `jsonschema` 主版本（3.x / 4.x）均无关。
 
 **2. 反空壳变异测试（34 项）**
 
 沿用组长对 DRAFT 的做法，对 REPAIR 三件套逐项破坏，**每一项都必须被拒绝**，证明校验通过不是约束太松：
 
-| 变异类别 | 项数 | 示例 | 结果 |
-|----------|------|------|------|
-| 响应侧（完整 schema） | 19 | 删 `execution`、`status` 改 `BOGUS`、`SUCCEEDED` 删 `output`、`resources.cpu` 改整数、`attempt` 改 `0`、产物 `type` 改 `VERIFY_LOG`、`sha256` 截短/含大写、URI 非 `artifact://pair10/` 协议 | 全部被拒绝 |
-| 失败侧 | 6 | `FAILED` 删 `error`、`error.code` 改 `exec4003`、`error` 缺 `message`、删 `execution` | 全部被拒绝 |
-| 请求侧（`check_request` 规则） | 9 | 请求携带 `status`/`job_id`/`output`/`error`、删 `trace_id`、`job_type` 改 `ABC`、`execution.mode` 改 `BOGUS` | 全部被拒绝 |
+| 变异类别 | 项数 | 示例 |
+|----------|------|------|
+| 响应侧（完整 schema） | 19 | 删 `execution`、`status` 改 `BOGUS`、`SUCCEEDED` 删 `output`、`resources.cpu` 改整数、`attempt` 改 `0`、产物 `type` 改 `VERIFY_LOG`、`sha256` 截短/含大写、URI 非 `artifact://pair10/` 协议 |
+| 失败侧 | 6 | `FAILED` 删 `error`、`error.code` 改 `exec4003`、`error` 缺 `message`、删 `execution` |
+| 请求侧（`check_request` 规则） | 9 | 请求携带 `status`/`job_id`/`output`/`error`、删 `trace_id`、`job_type` 改 `ABC`、`execution.mode` 改 `BOGUS` |
+
+完整 34 项逐条结果（同上环境）：
 
 ```text
+反空壳变异测试 —— 每一项都必须被拒绝
+========================================================================
+  OK  已拒绝  [res] 删 execution
+  OK  已拒绝  [res] status 改 BOGUS
+  OK  已拒绝  [res] job_type 改 ABC
+  OK  已拒绝  [res] job_id 去掉 job- 前缀
+  OK  已拒绝  [res] SUCCEEDED 删 output
+  OK  已拒绝  [res] schema_version 改 2.0.0
+  OK  已拒绝  [res] resources.cpu 改整数
+  OK  已拒绝  [res] attempt 改 0
+  OK  已拒绝  [res] execution.mode 改 BOGUS
+  OK  已拒绝  [res] trace_id 删空
+  OK  已拒绝  [res] 产物 type 改 VERIFY_LOG
+  OK  已拒绝  [res] 产物 sha256 截短
+  OK  已拒绝  [res] 产物 sha256 含大写
+  OK  已拒绝  [res] 产物 uri 去掉 pair10
+  OK  已拒绝  [res] 产物 uri 非 artifact 协议
+  OK  已拒绝  [res] 产物缺 producer_job_id
+  OK  已拒绝  [res] 产物 producer_job_id 非法
+  OK  已拒绝  [res] 产物缺 artifact_id
+  OK  已拒绝  [res] artifacts 不是数组
+  OK  已拒绝  [err] FAILED 删 error
+  OK  已拒绝  [err] status 改 SUCCEEDED（无 output）
+  OK  已拒绝  [err] error.code 改 exec4003
+  OK  已拒绝  [err] error.code 改 EXEC_403
+  OK  已拒绝  [err] error 缺 message
+  OK  已拒绝  [err] 删 execution
+  OK  已拒绝  [req] 请求携带 status
+  OK  已拒绝  [req] 请求携带 job_id
+  OK  已拒绝  [req] 请求携带 output
+  OK  已拒绝  [req] 请求携带 error
+  OK  已拒绝  [req] 请求删 trace_id
+  OK  已拒绝  [req] 请求删 schema_version
+  OK  已拒绝  [req] 请求 job_type 改 ABC
+  OK  已拒绝  [req] 请求 execution.mode 改 BOGUS
+  OK  已拒绝  [req] 请求 input 改字符串
+========================================================================
 合计 34 项：被拒绝 34，漏网 0
 ```
+
+> 说明：三类变异分别走**两条不同校验路径** —— 响应/失败侧走 `task.schema.json` 完整校验，请求侧走 `validate.py` 的 `check_request` 请求侧规则（请求不携带服务端字段）。因此 34 项同时证明了 **schema 不是空壳** 与 **请求侧规则不是空壳**。
 
 **3. 与 A 组的产物衔接**
 

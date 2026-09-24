@@ -49,7 +49,7 @@ EXIT=0
 |--------|------|
 | `e74af37` | e2: 确认 REPAIR 契约并补 trace_id / execution / 产物枚举对齐 |
 
-**验证结果**：
+**验证结果**（Ubuntu 22.04.5 LTS（WSL2）/ Python 3.10.12 / jsonschema 3.2.0）：
 
 ```bash
 $ python3 e2/validate.py
@@ -70,7 +70,7 @@ EXIT=0
 |----|------|--------|
 | ~~本行姓名与 Commit SHA~~ | 已解决 | 已回填姓名「张少逸」与 `e74af37` |
 | 与 A 组 / 组长的 10 条待议项 | 涉及 `task.schema.json`（组长文件）与 A 组仓库，成员B 无权单方面修改 | 见 `e2/README.md` 第 6.3 节 |
-| Linux 环境复跑 | 本机无 WSL | 合并到 `main` 前在 Linux 重跑 `validate.py` 并替换环境标注 |
+| ~~Linux 环境复跑~~ | 已解决 | 已在 **Ubuntu 22.04.5 LTS（WSL2）/ Python 3.10.12 / jsonschema 3.2.0** 下复跑，`validate.py` 与 34 项变异测试结果与 Windows 侧逐项一致；`e2/README.md` 6.5 的环境标注已同步更新为 Linux |
 | 请求侧 `schema_version` 冲突 | 与 A 组实现直接冲突 | 沿用 `e2/README.md` 2.3 第 1 条，等 A 组定夺 |
 
 ---
