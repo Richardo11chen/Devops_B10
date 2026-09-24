@@ -1,0 +1,2 @@
+IMAGE                        ID             DISK USAGE   CONTENT SIZE   EXTRA
+b10-draft-reference:latest   eca1d90eb03f        453MB          117MB        

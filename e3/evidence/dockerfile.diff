@@ -1,0 +1,12 @@
+--- Dockerfile.broken	2026-09-24 21:17:51.501908300 +0800
++++ Dockerfile.reference	2026-09-24 21:17:51.501908300 +0800
+@@ -1,5 +1,9 @@
+ FROM python:3.13-slim
+ WORKDIR /work
++RUN apt-get update && \
++    apt-get install -y --no-install-recommends \
++    gcc make libc6-dev && \
++    rm -rf /var/lib/apt/lists/*
+ COPY main.c Makefile ./
+ RUN make
+ CMD ["./hello"]

@@ -1,0 +1,9 @@
+FROM python:3.13-slim
+WORKDIR /work
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc make libc6-dev && \
+    rm -rf /var/lib/apt/lists/*
+COPY main.c Makefile ./
+RUN make
+CMD ["./hello"]
