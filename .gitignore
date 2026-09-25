@@ -1,4 +1,0 @@
-# 嵌套的真实 git 仓库（work/mdfixer-demo/），历史由其内部 .git 自管理，
-# 不纳入 B10 外层版本库；其 C0/C1 提交 SHA 与 reference.patch 已记录在
-# e3/fixtures/mdfixer/README.md。
-work/mdfixer-demo/

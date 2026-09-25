@@ -1,0 +1,17 @@
+CC      = gcc
+CFLAGS  = -MMD -MP
+
+main: main.o
+	$(CC) -o $@ $^
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+-include main.d
+
+.PHONY: check clean
+check: main
+	./main
+
+clean:
+	rm -f main.o main main.d
