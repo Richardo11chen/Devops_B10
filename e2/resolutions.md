@@ -36,6 +36,37 @@
 
 > 第 11 条是**组长的错误**，不是 A 组的问题。已在 `e2/validate.py` 中删除并加注说明，防止后人重新加回。
 
+### 追加裁决（2026-09-25，来自成员B 的 6.7.2 第 2 条）
+
+成员B 在 PR #8 的 `e2/README.md` 6.7.2 第 2 条提出：**同一份 `verify.log` 在两组被标为不同类型**。
+
+组长逐文件核实，属实：
+
+| URI | A 组 | B 组（改前） |
+|-----|------|--------------|
+| `artifact://pair10/job-draft01/verify.log` | `VERIFY_LOG` | `BUILD_LOG` |
+| `artifact://pair10/job-repair01/verify.log` | —（A 组无 REPAIR 样例） | `BUILD_LOG` |
+
+**裁决：B 组统一改用 `VERIFY_LOG`**（即成员B 提出的选项 a）。
+
+理由：`type` 是消费者查找产物的**判别键**。`BUILD_LOG`（构建日志）与 `VERIFY_LOG`（验证日志）本是两个不同语义；同一份产物在两组标不同值，等于契约在这一项上失效。选项 b（「两种都允许」）等于放弃判别能力，不可取。
+
+**执行**（由组长一次改完，保证每个提交内部自洽；只改一处会让 B10 前后矛盾）：
+
+| 文件 | 产物 | 改动 |
+|------|------|------|
+| `e2/contracts/dockerfile_job.res.json` | `verifylog-001` | `BUILD_LOG` → `VERIFY_LOG` |
+| `e2/contracts/repair_job.res.json` | `verify-log-002` | `BUILD_LOG` → `VERIFY_LOG` |
+
+其余保持 `BUILD_LOG` 不变且正确：`build-log-003`（真构建日志）、`cand1-log-004` / `cand2-log-005`（候选构建日志）。
+
+> **这处不一致是组长造成的**：裁决第 1 条「采纳 A 组完整枚举」时，只把 `VERIFY_LOG` 加进了 schema 枚举，
+> 未回头检查样例的**取值**；给 A 组的回复里「`dockerfile_job.*` 无需改动」也只验了 schema 合规、
+> 未验语义取值一致。成员B 的 6.7.2 第 2 条把这个洞挖了出来。
+>
+> **教训**：schema 合规 ≠ 契约一致。枚举扩容后必须回头扫一遍所有样例的取值，
+> 否则「类型判别键」会在两组间漂移 —— 而且 schema 校验**不会**报错，因为两种取值都合法。
+
 ---
 
 ## 二、A 组回应与最终对齐结果

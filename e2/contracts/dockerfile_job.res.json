@@ -53,7 +53,7 @@
       },
       {
         "artifact_id": "verifylog-001",
-        "type": "BUILD_LOG",
+        "type": "VERIFY_LOG",
         "uri": "artifact://pair10/job-draft01/verify.log",
         "media_type": "text/plain",
         "producer_job_id": "job-draft01",
