@@ -21,6 +21,7 @@ MDFixer 的输入是「固定 MD 报告 + 同一源码版本的 Makefile + 构�
 | `main.c` | 源文件，`#include "config.h"`，`printf("%s\n", MESSAGE)` |
 | `config.h` | 头文件，`#define MESSAGE "v1"`（基线值） |
 | `Makefile` | 带 MD 缺陷的构建脚本（`main.o: main.c` 缺 `config.h`） |
+| `Makefile.implicit` | 隐式规则 Makefile 变体（`-MMD -MP` + `-include main.d`），供 §6 `.d` 实证 |
 | `md_report.json` | 固定 MD 报告（单条 `MISSING`，`detector=INSTRUCTOR_ORACLE`） |
 | `reference.patch` | 参考修复（Target 风格：`main.o` 规则补 `config.h`） |
 | `README.md` | 本说明 |
@@ -123,7 +124,7 @@ clean:
 
 | 要素 | 值 |
 |------|-----|
-| 固定项目版本 | C0 = `16a1490984aaa3904a80b6b433dfbed47d86a6ce`（MD 潜伏）；C1 = `f58876392b157eb121f9bc2a30ca0566e69db4c2`（Target 修复）。真实提交见 `work/mdfixer-demo/`（嵌套仓库，外层 `.gitignore` 排除） |
+| 固定项目版本 | C0 = `16a1490984aaa3904a80b6b433dfbed47d86a6ce`（MD 潜伏）；C1 = `f58876392b157eb121f9bc2a30ca0566e69db4c2`（Target 修复）。真实提交快照见 `work/mdfixer-demo/{C0,C1}/`（文件 + `.git_info.txt`，含完整 SHA/作者/日期/提交信息） |
 | 运行环境 | Ubuntu 22.04（WSL2），gcc 11.4.0，GNU Make 4.3 |
 | 本次修改/故障 | `Makefile` 的 `main.o` 规则漏声明 `config.h` 先决条件 |
 | 预期输出及依据 | 修复前改头文件不重建（旧值）；修复后改头文件自动重建（新值）——依据是 make 的 mtime 先决条件比较 |
