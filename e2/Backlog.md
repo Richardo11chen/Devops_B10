@@ -10,7 +10,7 @@
 | T-004 | 确认 REPAIR 接口契约 | 成员B | `e2/contracts/repair_job.*`、`e2/README.md` 第 6 节 | REPAIR 请求/响应/错误三件套字段齐全；与 `task.schema.json` 一致；差异点写明理由 | 已完成 |
 | T-005 | E3 DRAFT 样本与 Docker 证据 | 成员C | `e3/fixtures/draft/`、`e3/evidence/` | broken 与 reference 两候选齐备；两层成功判据（编译通过 + 功能验证）均有日志；保存 diff、退出码、日志、镜像 ID | 已完成 |
 | T-006 | E3 MDFixer 固定输入与修复验证 | 成员D | `e3/fixtures/mdfixer/`、`e3/evidence/` | 固定输入四件套齐备；Target 风格参考 Patch 可用；四种风格差异说明；`.d` 文件行为已验证 | 待办 |
-| T-007 | 向 A 组提 DRAFT 接口确认 Issue | 组长 | `e2/issue_draft.md` 中的 A 组 Issue 正文 | 只涉及组长负责的 DRAFT 部分；开放问题列清；**不直接修改 A 组仓库** | 待办 |
+| T-007 | 向 A 组提 DRAFT 接口确认 Issue | 组长 | `e2/issue_draft.md` 中的 A 组 Issue 正文 | 只涉及组长负责的 DRAFT 部分；开放问题列清；**不直接修改 A 组仓库** | 已完成 |
 | T-008 | 记录 AI 使用情况 | 全体 | `e2/AI_USAGE.md` | 每人至少一条记录，含提示摘要、AI 建议、人工采纳/修改/拒绝理由 | 进行中 |
 
 ## 说明
