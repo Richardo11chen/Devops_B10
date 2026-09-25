@@ -595,7 +595,9 @@ curl -s https://raw.githubusercontent.com/ana12-21/Devops_G10/fec3fbe/e2/contrac
 | `c434742` | 落地 12 条裁决、修正因枚举扩容而失效的论据 |
 | `d9c49a0` | 回填裁决落地的 Commit SHA 与验证结果 |
 
-此后 `main` 又前进了 14 个提交（成员C 的 PR #5、成员D 的 PR #7 相继合入，现为 `aad384e`）。故本组把 `origin/main` @ `aad384e` 再次合入本分支，把这 3 个提交与最新主线接上，再走一次 PR。
+此后 `main` 又前进了 14 个提交（成员C 的 PR #5、成员D 的 PR #7 相继合入，现为 `aad384e`）。故本组把 `origin/main` @ `aad384e` 再次合入本分支，把这 3 个提交与最新主线接上。
+
+因 PR #3 已合入、无法复用，本次补交走 **PR #8**。另需注意：**Issue #2 已由组长随 PR #3 关闭**（`closed this as completed in #3`），故 PR #8 **不写 `Closes #2`**；原挂在 Issue #2 上的 3 条新发现与「AI 记录编号口径」问题，已改由 PR #8 的评论重新提请裁定，避免随 Issue 关闭而丢失。
 
 #### 6.8.2 冲突现场与处理
 
