@@ -178,6 +178,7 @@ EXIT=0
 > **Issue**：[#2](../../issues/2) ｜ **分支**：`memberB/e2-repair-contract`
 > **核对对象（双基线）**：任务书指定的 A 组基线 commit **`7720a30`**，以及核对时 A 组 main 的现况 **`fec3fbe`**（2026-09-24 抓取）。A 组在这两点之间**自己改过** `repair_job.*` 与 `task.schema.json`，故本节所有「A 组原样」列**并列给出两个基线的取值**，两种口径都能核对；文件级差异见 6.6。
 > **说明**：A 组仓库 `e2/contracts/` 中**已存在** `repair_job.*` 三件套，故本节与第 2 节（DRAFT）同构，是**复制 → 逐条确认 → 修正**，而非凭空设计。
+> **裁决状态（2026-09-25）**：6.3 的 12 条议题已由组长裁决，**完整裁决见 [`resolutions.md`](resolutions.md)**（组长维护，成员只读；独立成文以避免本节与组长同时改同一文件）。摘要：B 组侧 **6 条已执行完毕**（第 1、4、5、6、7、11 条），**6 条转 A 组**（第 2、3、8、9 的 `trace_id` 部分、10、12 条），第 9 条的 `schema_version` 部分已由 A 组解决。`task.schema.json` 相应收紧（`required` 7 → 8 项、`execution.required` 加 `attempt`、`trace_id` 加 `pattern`、产物枚举 8 → 10 项），**本组三件套无需返工**——已在合并后的最新代码上复跑确认，见 6.5 第 2 节与 6.7。
 
 REPAIR 对应 **MDFixer（修复）** 服务，是四类任务中唯一会**改写代码**的一类。
 
@@ -215,7 +216,7 @@ A 组现有 `repair_job.*` **不能原样搬入本仓库**：用本仓库 `task.
 | 3 | `execution.resources.cpu` | `7720a30` 无 `execution`；`fec3fbe` 为整数 `2` | 字符串 `"2"` | 本仓库 schema 定义 `cpu` 为 `string`（可表达 `"0.5"` / `"2000m"`）；A 组为 `integer`，属待议项（6.3 第 2 条） |
 | 4 | `execution.timeout_seconds` | `fec3fbe`：res 为 `300`，同批 err 的 `detail.deadline_sec` 为 `600`（**A 组自不一致**） | 三件套统一 `300` | 消除 A 组样例的内部矛盾；本组 `stats.duration_sec = 229` 落在该上限内 |
 | 5 | `execution.attempt` | `fec3fbe` res 为 `1` | `3` | REPAIR 的 `attempt` = **候选轮次**（ADR-002）：`3` 表示第 3 个候选才通过，与 `stats` 的 3 / 2 / 1 对应 |
-| 6 | 产物 `type` | `7720a30` **无 `artifacts[]`**（产物为裸字段 `output.git_patch_uri`）；`fec3fbe` 有 `artifacts[]`，其中一项为 `VERIFY_LOG` | 该项改 `BUILD_LOG` | 本仓库产物枚举 8 项中**无** `VERIFY_LOG`；DRAFT 契约已用 `BUILD_LOG` 承载 `verify.log`，沿用同一口径、**不动 `task.schema.json`**（6.3 第 1 条） |
+| 6 | 产物 `type` | `7720a30` **无 `artifacts[]`**（产物为裸字段 `output.git_patch_uri`）；`fec3fbe` 有 `artifacts[]`，其中一项为 `VERIFY_LOG` | 该项改 `BUILD_LOG` | **理由已随裁决更新**：裁决第 1 条把 `VERIFY_LOG` 并入枚举（8 → 10 项），本项**已非合规所迫**；仍用 `BUILD_LOG` 是为与**组长定稿的 DRAFT 口径**一致（`dockerfile_job.res.json` 的 `verify.log` 亦为 `BUILD_LOG`，组长裁定其「无需改动」）。若要统一为 `VERIFY_LOG`，须 DRAFT 与 REPAIR **一并改**，故列为新待议项（6.7 第 2 条） |
 | 7 | 失败码 | `EXEC_4002` + `FAILED`（**两基线同**） | `EXEC_4003` + `FAILED` | A 组**自家** `error_codes.md` 里 `EXEC_4003` 才是「候选 patch 全部失败（MDFixer）」，`EXEC_4002` 对应 `TIMED_OUT`；原样例与自家错误码表自相矛盾 |
 | 8 | 失败 `detail` 结构 | `deadline_sec` / `iterations_used` / `last_failure_step` / `log_uri`（两基线同，属**超时**语义） | `candidates_generated` / `candidates_rejected` / `max_candidates` / `last_failure_step` / `exit_code` / `log_uri` | `EXEC_4003` 的触发条件是「候选全败」，detail 应回答「试了几个候选、卡在哪一层」，故以候选计数替换超时字段 |
 | 9 | `input.options.style_hint` | `"preserve-tab-indent"`（两基线同） | 枚举 `"TARGET"` | A 组取值描述**缩进风格**（tab / 空格），与 E3 成员D 的四种**声明风格**（Target / Macro / Hybrid / Implicit）不是同一套分类；契约须与 E3 基线对齐 |
@@ -225,7 +226,7 @@ A 组现有 `repair_job.*` **不能原样搬入本仓库**：用本仓库 `task.
 | 13 | `output.stats` | 键 = `duration_sec` / `candidates_generated` / `candidates_rejected`（两基线同） | 沿用全部键，新增 `candidates_accepted` | 与 `attempt` 对照即可自检「第 3 个候选被接受」，闭合 3 / 2 / 1 的计数 |
 | 14 | `output.artifacts[]` 条目数 | `fec3fbe` 为 3 件（`patch-001` / `build-log-003` / `verify-log-002`） | 5 件：保留 A 组原 `artifact_id`，追加 `cand1-log-004`、`cand2-log-005` | ADR-002 第 5 条与 A 组议题 4 口径：所有产物引用统一经 `artifacts[]` 交接，`rejected_candidates[].log_uri` 指向的日志也须登记 |
 
-> **改动构成**：14 条中 **4 条由本仓库 `task.schema.json` / `validate.py` 直接驱动**（第 1 条的 `trace_id`、第 2 条、第 3 条、第 6 条），其余 10 条为**取值对齐**与 **REPAIR 语义所必需的新增可选键**。后者全部落在 `input` / `output` 这两个 schema 未封闭的 `object` 内，属 ADR-001 定义的**可兼容变化**（新增可选字段）。
+> **改动构成**：14 条中 **3 条由本仓库 `task.schema.json` / `validate.py` 直接驱动**（第 1 条的 `trace_id`、第 2 条、第 3 条），其余 11 条为**取值对齐**与 **REPAIR 语义所必需的新增可选键**。后者全部落在 `input` / `output` 这两个 schema 未封闭的 `object` 内，属 ADR-001 定义的**可兼容变化**（新增可选字段）。第 6 条原先也属「schema 驱动」，裁决第 1 条后枚举已含 `VERIFY_LOG`，该条转为**口径选择**（见 6.7 第 2 条）。
 
 > **相对本节上一版（`e74af37`）的纠正**：上一版曾把 `input` 改成 A 组没有的形态 —— 漏掉 `makefile_uri`、把 `max_candidates` 提到 `input` 顶层、新增来源不明的 `source_commit`、`repository.commit` 写成 `<C1_FULL_40_SHA>`。这四处**都不是 schema 冲突驱动的**，属越界改动，本版已全部回到 A 组口径：`makefile_uri` 恢复（6.1 第 3 条）、`max_candidates` 移回 `input.options`（6.1 第 5 条）、`source_commit` 删除并转为待议项（6.3 第 11 条）、`commit` 改回 `<C0_FULL_40_SHA>`（6.1 第 2 条）。
 
@@ -233,20 +234,26 @@ A 组现有 `repair_job.*` **不能原样搬入本仓库**：用本仓库 `task.
 
 按优先级排列。第 1–5、9 条涉及 `task.schema.json`（**组长文件**），B 组**未自行修改**，一律走 Issue。
 
-| # | 问题 | 冲突点 | B 组倾向 |
-|---|------|--------|----------|
-| 1 | 产物 `type` 是否补 `VERIFY_LOG` | A 组枚举含 `VERIFY_LOG` / `ERROR_REPORT`，本仓库 8 项无 | 本组先用 `BUILD_LOG` 承载 `verify.log`，**不动 schema**；若要独立类型请组长裁决 |
-| 2 | `execution.resources.cpu` 类型 | A 组 `integer`，本仓库 `string` | 统一为 `string`（可表达小数与 Kubernetes 风格 `"2000m"`） |
-| 3 | `execution` 是否进 `required` | A 组 `required` 不含 `execution`，本仓库含 | 保留本组「必填」；A 组失败样例因此缺 `execution`，需 A 组补齐 |
-| 4 | `execution.attempt` 是否提必填 | A 组 `[mode, attempt]`，本仓库 `[mode]` | REPAIR 靠 `attempt` 表达候选轮次，**建议提为必填**（需组长改 schema） |
-| 5 | `required` 项次是否取并集 | A 组含 `created_at`，本仓库含 `execution` | 请组长裁定是否合并为 8 项；本组样例已同时携带两者，两种口径均可通过 |
-| 6 | `trace_id` 是否加 `pattern` | A 组 `^trace-[a-z0-9-]+$`，本仓库仅 `minLength: 1` | 无实质冲突，本组可跟进 |
-| 7 | `artifact` 的 `media_type` / `sha256` 是否必填 | A 组两者必填，本仓库为可选 | 本组 REPAIR 产物已一律携带；是否提为 schema 必填请组长裁定 |
-| 8 | **修复器自身崩溃**用哪个错误码 | `ANALYSIS_5001`（分析器失败）的服务列**不含 MDFixer**；`ENV_3001`（可运行镜像拉取失败）的服务列**含 MDFixer** | 仅「修复器内部异常」这一类无码可依；请 A 组把 MDFixer 写入 `ANALYSIS_5001` 该行，或新增 `ANALYSIS_5002` |
-| 9 | 请求侧是否携带 `schema_version` | 与第 2.3 节第 1 条同源 | 沿用 2.3 结论，等 A 组定夺 |
-| 10 | REPAIR 超时样例是否另立 | A 组原样例把「候选全败」写成超时（`EXEC_4002` + 「Repair timed out」），与自家错误码表矛盾 | 本组 `repair_job_err.res.json` 只承载「候选全败」（`EXEC_4003`）；超时应为 `EXEC_4002` + `status = TIMED_OUT`，是否补一份样例请 A 组确认 |
-| 11 | `input.source_commit` 是否入契约 | **组长** `e2/validate.py` 的内置 REPAIR 请求样例（第 123–125 行）携带 `source_commit`；A 组 `repair_job.req.json` **两个基线都没有** | 本组**不采纳**：与 `input.repository.commit` 语义重复，两者取值不一致时无法确定以谁为准。若组长要求保留，应明确它**取代** `repository.commit`，而非二者并存 |
-| 12 | `execution.timeout_seconds` 口径 | A 组 res 为 `300`，同批 err 的 `detail.deadline_sec` 为 `600`，两者自不一致 | 本组三件套统一 `300`，请 A 组同步；超时场景应另立样例（见第 10 条） |
+**2026-09-25 更新**：12 条**已全部裁决**，末列给出结果；完整裁决理由与执行方见 [`resolutions.md`](resolutions.md)（组长维护）。
+
+| # | 问题 | 冲突点 | B 组倾向 | 裁决（2026-09-25） |
+|---|------|--------|----------|--------------------|
+| 1 | 产物 `type` 是否补 `VERIFY_LOG` | A 组枚举含 `VERIFY_LOG` / `ERROR_REPORT`，本仓库 8 项无 | 本组先用 `BUILD_LOG` 承载 `verify.log`，**不动 schema**；若要独立类型请组长裁决 | ✅ **采纳 A 组完整枚举（10 项）**——已由组长改 schema；本组三件套不受影响（6.2 第 6 条） |
+| 2 | `execution.resources.cpu` 类型 | A 组 `integer`，本仓库 `string` | 统一为 `string`（可表达小数与 Kubernetes 风格 `"2000m"`） | ⏳ **转 A 组**：裁决统一为 `string`，理由为整数表达不了毫核值 |
+| 3 | `execution` 是否进 `required` | A 组 `required` 不含 `execution`，本仓库含 | 保留本组「必填」；A 组失败样例因此缺 `execution`，需 A 组补齐 | ⏳ **转 A 组**：课程原文要求公共字段**必须包含 `execution`**，A 组需补齐 |
+| 4 | `execution.attempt` 是否提必填 | A 组 `[mode, attempt]`，本仓库 `[mode]` | REPAIR 靠 `attempt` 表达候选轮次，**建议提为必填** | ✅ **提为必填**，本组已对齐 A 组的 `["mode", "attempt"]` |
+| 5 | `required` 项次是否取并集 | A 组含 `created_at`，本仓库含 `execution` | 请组长裁定是否合并为 8 项；本组样例已同时携带两者，两种口径均可通过 | ✅ **取并集，8 项**（补 `created_at`）——本组样例原就携带两者，无需改动 |
+| 6 | `trace_id` 是否加 `pattern` | A 组 `^trace-[a-z0-9-]+$`，本仓库仅 `minLength: 1` | 无实质冲突，本组可跟进 | ✅ **加 pattern**，与 A 组一致 |
+| 7 | `artifact` 的 `media_type` / `sha256` 是否必填 | A 组两者必填，本仓库为可选 | 本组 REPAIR 产物已一律携带；是否提为 schema 必填请组长裁定 | ✅ **都提为必填**（4 → 6 项）——本组产物原就携带两者，无需改动 |
+| 8 | **修复器自身崩溃**用哪个错误码 | `ANALYSIS_5001`（分析器失败）的服务列**不含 MDFixer**；`ENV_3001`（可运行镜像拉取失败）的服务列**含 MDFixer** | 仅「修复器内部异常」这一类无码可依；请 A 组把 MDFixer 写入 `ANALYSIS_5001` 该行，或新增 `ANALYSIS_5002` | ⏳ **转 A 组**：裁决**新增 `ANALYSIS_5002`**（修复器内部异常），不改 `ANALYSIS_5001` 的语义 |
+| 9 | 请求侧是否携带 `schema_version` | 与第 2.3 节第 1 条同源 | 沿用 2.3 结论，等 A 组定夺 | ✅ `schema_version` **已解决**（A 组已加）；⏳ `trace_id` **仍未加，继续追** |
+| 10 | REPAIR 超时样例是否另立 | A 组原样例把「候选全败」写成超时（`EXEC_4002` + 「Repair timed out」），与自家错误码表矛盾 | 本组 `repair_job_err.res.json` 只承载「候选全败」（`EXEC_4003`）；超时应为 `EXEC_4002` + `status = TIMED_OUT`，是否补一份样例请 A 组确认 | ✅ **支持成员B**——本组样例的取舍被采纳；补超时样例转 A 组 |
+| 11 | `input.source_commit` 是否入契约 | **组长** `e2/validate.py` 的内置 REPAIR 请求样例（第 123–125 行）携带 `source_commit`；A 组 `repair_job.req.json` **两个基线都没有** | 本组**不采纳**：与 `input.repository.commit` 语义重复，两者取值不一致时无法确定以谁为准 | ✅ **不入契约，已从 B 组删除**；组长确认该字段系其**本人笔误**，已在 `validate.py` 留注释防止再加回 |
+| 12 | `execution.timeout_seconds` 口径 | A 组 res 为 `300`，同批 err 的 `detail.deadline_sec` 为 `600`，两者自不一致 | 本组三件套统一 `300`，请 A 组同步；超时场景应另立样例（见第 10 条） | ⏳ **转 A 组**：裁决删除 `input.deadline_sec`，超时只由 `execution.timeout_seconds` 表达 |
+
+**裁决统计**：B 组侧 **6 条已执行完毕**（第 1、4、5、6、7、11 条），**6 条转 A 组**（第 2、3、8、9 的 `trace_id` 部分、10、12 条），第 9 条的 `schema_version` 部分已解决。转 A 组的部分已写入 A 组 Issue `[B10] DRAFT 接口确认` 的第二轮回复（见 `issue_draft.md`），**本组不重复提**。
+
+> 关于第 11 条：裁决明确记载该字段是**组长的错误**、不是 A 组的问题。本组「顶住没采纳」的判断被完整接受——这也是本轮唯一一次 AI 建议与人工判断一致的驳斥。相关记录见 `AI_USAGE.md` 的 AI-005。
 
 ### 6.4 REPAIR 与其余三类的差异点
 
@@ -271,7 +278,7 @@ A 组现有 `repair_job.*` **不能原样搬入本仓库**：用本仓库 `task.
 python3 e2/validate.py
 ```
 
-运行结果（2026-09-24，**Ubuntu 22.04.5 LTS（WSL2, x86_64）** / Python 3.10.12 / jsonschema 3.2.0）：
+运行结果（2026-09-24，**Ubuntu 22.04.5 LTS（WSL2, x86_64）** / Python 3.10.12 / jsonschema 3.2.0；**裁决前**，当时 `task.schema.json` 为 `required=7` 项 —— 裁决后的复跑见本节第 2 部分）：
 
 ```text
 $ python3 e2/validate.py
@@ -342,9 +349,50 @@ EXIT=0
 > 需注意：仓库 [`README.md`](../README.md) 记录的本组验证环境为 **Ubuntu 24.04.3 LTS（Python 3.12.3）**，第 5 节的 DRAFT 结论即出自该环境；本次 REPAIR 复跑使用的是另一台 WSL 发行版 **Ubuntu 22.04.5**。**两套 Linux 发行版下输出一致**，故本节结论不依赖具体发行版版本。
 > `validate.py` 只依赖 Python 标准库与 `jsonschema`。同一套契约文件另在 Python 3.13.12 + jsonschema 4.26.0（Windows 11 + Git Bash）下复跑，结果与上表**逐项一致** —— 说明校验结论与操作系统、与 `jsonschema` 主版本（3.x / 4.x）均无关。
 
-**2. 当前版本（6.6 基线纠正后）的复跑记录**
+**2. 裁决后复跑记录（合并 `origin/main` 后，`required=8`）**
 
-上述 Linux 输出取自 6.6 基线纠正**之前**的同一套三件套。纠正后三件套已按同一条命令在当前版本复跑，结果与上表逐项一致。当前版本指纹如下，便于核对「文档引用的就是当前文件」：
+组长于 2026-09-25 裁决 12 条议题并收紧 `task.schema.json`（提交 `70776a7`）。本组把 `origin/main` **合并**进 `memberB/e2-repair-contract`，在**未改动任何契约文件**的前提下复跑：
+
+```text
+$ python3 e2/validate.py
+E2 契约校验（B10）
+Schema: e2\task.schema.json
+task.schema.json 已加载（required=8 项，properties=11 项）
+
+====================================================================
+01  四类任务的有效请求与响应样例全部通过 task.schema.json
+====================================================================
+    OK    内置响应样例 DRAFT 通过（job_id=job-draft）
+    OK    内置响应样例 FULL_CHECK 通过（job_id=job-fullcheck）
+    OK    内置响应样例 INCREMENTAL_CHECK 通过（job_id=job-incrementalcheck）
+    OK    内置响应样例 REPAIR 通过（job_id=job-repair）
+    OK    内置请求样例 DRAFT
+    OK    内置请求样例 FULL_CHECK
+    OK    内置请求样例 INCREMENTAL_CHECK
+    OK    内置请求样例 REPAIR
+    OK    dockerfile_job.res.json 通过（status=SUCCEEDED）
+    OK    dockerfile_job_err.res.json 通过（status=FAILED）
+    OK    repair_job.res.json 通过（status=SUCCEEDED）
+    OK    repair_job_err.res.json 通过（status=FAILED）
+    OK    dockerfile_job.req.json
+    OK    repair_job.req.json
+    OK    9 个公共字段齐全：schema_version、job_id、trace_id、job_type、status、execution、input、output、error
+    OK    error 字段可用：FAILED 样例携带 error 通过校验
+    OK    可选字段 output / error / created_at / updated_at 均已声明
+    OK    execution 时间字段均为 ISO8601 UTC
+
+（02–04 三节与第 1 部分逐项一致，此处略）
+
+====================================================================
+结论
+====================================================================
+最小检查 01–04 全部通过。
+EXIT=0
+```
+
+**关键点**：`required` 由 7 项变为 8 项（补 `created_at`），而本组三件套**一行未改**即通过 —— 因为 `created_at`、`execution.attempt`、`media_type`、`sha256` 这些新收紧的必填项，本组样例**原就一律携带**。这正是裁决「无需返工」的依据，也说明 6.2 的 14 处改动并非凑数。
+
+指纹（与 6.6 纠正后**完全一致** —— 证明本轮只动文档与测试脚本，契约零改动）：
 
 | 文件 | sha256（前 16 位） | 字节数 | 顶层键数 |
 |------|--------------------|--------|----------|
@@ -352,27 +400,28 @@ EXIT=0
 | `e2/contracts/repair_job.res.json` | `12d7b5d073e0b3fb` | 4032 | 10 |
 | `e2/contracts/repair_job_err.res.json` | `c96535321092a94a` | 1307 | 10 |
 
-如需针对**当前版本**刷新 Linux 侧原文，在 WSL 中执行：
+> 环境说明：本次复跑在 **Windows 11 + Git Bash**（Python 3.13.12 / jsonschema 4.26.0）下取得，故 `Schema:` 一行显示 Windows 路径分隔符。**如需 Linux 侧原文**（课程要求），在 WSL 中执行下列命令后替换本段：
+>
+> ```bash
+> cd "/mnt/c/Users/24188/Desktop/Git文件夹/Devops_B10"
+> git log --oneline -1
+> python3 e2/validate.py; echo "EXIT=$?"
+> ```
 
-```bash
-cd "/mnt/c/Users/24188/Desktop/Git文件夹/Devops_B10"
-python3 e2/validate.py; echo "EXIT=$?"
-```
+**3. 反空壳变异测试（44 项变异 + 3 项正向对照 + 2 项已知缺口）**
 
-**3. 反空壳变异测试（34 项）**
+沿用组长对 DRAFT 的做法，对 REPAIR 三件套逐项破坏，**每一项都必须被拒绝**，证明校验通过不是约束太松。裁决收紧 schema 后，脚本扩成**三张表**：
 
-沿用组长对 DRAFT 的做法，对 REPAIR 三件套逐项破坏，**每一项都必须被拒绝**，证明校验通过不是约束太松：
+| 表 | 项数 | 内容 |
+|----|------|------|
+| 必须被拒绝 | 44 | 响应侧 26（含裁决新增的 `created_at` / `execution.attempt` / `trace_id` pattern / `media_type` / `sha256` 必填共 7 项）、失败侧 9、请求侧 9 |
+| 必须被接受 | 3 | 产物 `type` 改 `VERIFY_LOG`、改 `ERROR_REPORT`、原样例不变 —— 证明裁决第 1 条的枚举扩容**真的生效**，而非「一律拒绝」的空壳 |
+| 已知缺口 | 2 | `check_request` 未校验 `trace_id` 的 pattern、未校验 `execution.attempt` —— 见 6.7 第 1 条 |
 
-| 变异类别 | 项数 | 示例 |
-|----------|------|------|
-| 响应侧（完整 schema） | 19 | 删 `execution`、`status` 改 `BOGUS`、`SUCCEEDED` 删 `output`、`resources.cpu` 改整数、`attempt` 改 `0`、产物 `type` 改 `VERIFY_LOG`、`sha256` 截短/含大写、URI 非 `artifact://pair10/` 协议 |
-| 失败侧 | 6 | `FAILED` 删 `error`、`error.code` 改 `exec4003`、`error` 缺 `message`、删 `execution` |
-| 请求侧（`check_request` 规则） | 9 | 请求携带 `status`/`job_id`/`output`/`error`、删 `trace_id`、`job_type` 改 `ABC`、`execution.mode` 改 `BOGUS` |
-
-完整 34 项逐条结果（同上环境）：
+完整输出：
 
 ```text
-反空壳变异测试 —— 每一项都必须被拒绝
+反空壳变异测试 —— 第一部分：每一项都必须被拒绝
 ========================================================================
   OK  已拒绝  [res] 删 execution
   OK  已拒绝  [res] status 改 BOGUS
@@ -384,7 +433,6 @@ python3 e2/validate.py; echo "EXIT=$?"
   OK  已拒绝  [res] attempt 改 0
   OK  已拒绝  [res] execution.mode 改 BOGUS
   OK  已拒绝  [res] trace_id 删空
-  OK  已拒绝  [res] 产物 type 改 VERIFY_LOG
   OK  已拒绝  [res] 产物 sha256 截短
   OK  已拒绝  [res] 产物 sha256 含大写
   OK  已拒绝  [res] 产物 uri 去掉 pair10
@@ -393,12 +441,23 @@ python3 e2/validate.py; echo "EXIT=$?"
   OK  已拒绝  [res] 产物 producer_job_id 非法
   OK  已拒绝  [res] 产物缺 artifact_id
   OK  已拒绝  [res] artifacts 不是数组
+  OK  已拒绝  [res] 删 created_at
+  OK  已拒绝  [res] 删 execution.attempt
+  OK  已拒绝  [res] trace_id 改 trace020（缺连字符）
+  OK  已拒绝  [res] trace_id 改 TRACE-020（大写）
+  OK  已拒绝  [res] trace_id 改 trace-020_x（含下划线）
+  OK  已拒绝  [res] 产物删 media_type
+  OK  已拒绝  [res] 产物删 sha256
+  OK  已拒绝  [res] 产物 type 改 WAT
   OK  已拒绝  [err] FAILED 删 error
   OK  已拒绝  [err] status 改 SUCCEEDED（无 output）
   OK  已拒绝  [err] error.code 改 exec4003
   OK  已拒绝  [err] error.code 改 EXEC_403
   OK  已拒绝  [err] error 缺 message
   OK  已拒绝  [err] 删 execution
+  OK  已拒绝  [err] 删 created_at
+  OK  已拒绝  [err] 删 execution.attempt
+  OK  已拒绝  [err] trace_id 改 trace021（缺连字符）
   OK  已拒绝  [req] 请求携带 status
   OK  已拒绝  [req] 请求携带 job_id
   OK  已拒绝  [req] 请求携带 output
@@ -408,11 +467,30 @@ python3 e2/validate.py; echo "EXIT=$?"
   OK  已拒绝  [req] 请求 job_type 改 ABC
   OK  已拒绝  [req] 请求 execution.mode 改 BOGUS
   OK  已拒绝  [req] 请求 input 改字符串
+
+第二部分：正向对照，每一项都必须被接受
 ========================================================================
-合计 34 项：被拒绝 34，漏网 0
+  OK  已接受  [res] 产物 type 改 VERIFY_LOG（枚举已并入，应合法）
+  OK  已接受  [res] 产物 type 改 ERROR_REPORT（枚举已并入，应合法）
+  OK  已接受  [res] 未改动的原样例（应合法）
+
+第三部分：已知缺口，预期「不被拒绝」——记录在案，不计入失败
+========================================================================
+  已确认缺口  [req] 请求 trace_id 改 trace020（缺连字符）
+              原因：check_request 未校验 trace_id 的 pattern
+  已确认缺口  [req] 请求 execution 只留 mode（缺 attempt）
+              原因：check_request 未校验 execution.attempt（设计上 attempt 由执行方产生，故视为可接受）
+========================================================================
+合计 44 项变异：被拒绝 44，漏网 0
+合计 3 项正向对照：被接受 3，误拒 0
+合计 2 项已知缺口：确认 2（不影响本次交付，待组长定夺）
 ```
 
-> 说明：三类变异分别走**两条不同校验路径** —— 响应/失败侧走 `task.schema.json` 完整校验，请求侧走 `validate.py` 的 `check_request` 请求侧规则（请求不携带服务端字段）。因此 34 项同时证明了 **schema 不是空壳** 与 **请求侧规则不是空壳**。
+> 说明：变异分别走**两条不同校验路径** —— 响应/失败侧走 `task.schema.json` 完整校验，请求侧走 `validate.py` 的 `check_request` 请求侧规则（请求不携带服务端字段）。因此 44 项同时证明了 **schema 不是空壳** 与 **请求侧规则不是空壳**。
+>
+> **相对上一版（34 项）的变化**：`[res] 产物 type 改 VERIFY_LOG` 一项**由「必须被拒绝」改为「必须被接受」** —— 裁决第 1 条把 `VERIFY_LOG` 并入枚举后，该取值已合法。脚本若仍把它当反例，就会误报成漏网；这一处调整本身就是**裁决生效的直接证据**。
+>
+> 变异脚本位于工作目录 `.workbuddy/plans/_mutate_repair.py`。按本组约定 `.workbuddy/` **不进版本库**（存放协调文档、探针脚本与基线证据），故上表以**完整运行输出**代替脚本入库；**若组长需要把脚本纳入仓库以便独立复核，告知即可移入 `e2/tools/`**（属仓库骨架范围，成员B 不擅自新增目录）。
 
 **4. 必要字段删除自测（`validate.py` 直报）**
 
@@ -474,3 +552,33 @@ $ echo $?
 curl -s https://raw.githubusercontent.com/ana12-21/Devops_G10/7720a30/e2/contracts/repair_job.req.json
 curl -s https://raw.githubusercontent.com/ana12-21/Devops_G10/fec3fbe/e2/contracts/repair_job.req.json
 ```
+
+### 6.7 裁决落地与新发现（2026-09-25）
+
+#### 6.7.1 裁决落地：三件套零改动
+
+组长裁决 12 条议题并收紧 `task.schema.json`（`70776a7`）后，本组把 `origin/main` 合并进 `memberB/e2-repair-contract`，**未改动任何契约文件**即通过全部校验：
+
+| 收紧项 | 旧 → 新 | 本组需改否 | 原因 |
+|--------|---------|-----------|------|
+| 顶层 `required` | 7 → 8 项（补 `created_at`） | 否 | 两份响应样例原就携带 `created_at` |
+| `execution.required` | `[mode]` → `[mode, attempt]` | 否 | 两份响应样例原就携带 `attempt` |
+| `trace_id` | `minLength: 1` → `pattern: ^trace-[a-z0-9-]+$` | 否 | 三件套取值为 `trace-020` / `trace-021`，本就符合 pattern |
+| `artifact.required` | 4 → 6 项（补 `media_type`、`sha256`） | 否 | 5 项产物原就都带 `media_type` 与 `sha256` |
+| 产物 `type` 枚举 | 8 → 10 项（补 `ERROR_REPORT`、`VERIFY_LOG`） | 否，但见 6.7.2 第 2 条 | 本组用 `GIT_PATCH` / `BUILD_LOG`，均在枚举内 |
+
+**结论**：收紧后的 schema 对本组产出的唯一影响，是让 6.2 第 6 条**失去了「合规所迫」这一理由**（枚举已含 `VERIFY_LOG`）。该条已按真实理由重写。
+
+#### 6.7.2 本轮新发现（3 条，均待组长定夺）
+
+| # | 发现 | 证据 | 建议 |
+|---|------|------|------|
+| 1 | **`check_request` 不校验 `trace_id` 的 pattern** | 变异测试第 3 部分：请求的 `trace_id` 改为 `trace020`（缺连字符），`check_request` **不拒绝**；同一取值放在响应侧则被 schema 拒绝 | 给 `check_request` 补 pattern 校验。schema 描述 `trace_id`「由发起方产生」，**请求侧才是能在源头拦下错误格式的唯一位置**；否则新加的 pattern 只作用于「已由服务端回填」的响应，拦截价值大打折扣 |
+| 2 | **同一份 `verify.log` 在两组标为不同类型** | A 组用 `VERIFY_LOG`；B 组两处都用 `BUILD_LOG`（`dockerfile_job.res.json` 的 `verifylog-001`、`repair_job.res.json` 的 `verify-log-002`），且组长已裁定 `dockerfile_job.*`「无需改动」 | 裁决第 1 条已把枚举统一为两组并集，但**取值口径仍不一致**。若要对齐 A 组，须 **DRAFT 与 REPAIR 一并改**（只改 REPAIR 会让 B 组内部前后不一致）；若不改，建议在 `artifact_format.md` 写明「`verify.log` 允许 `BUILD_LOG` 或 `VERIFY_LOG`」 |
+| 3 | **`check_request` 不校验 `execution.attempt`** | 变异测试第 3 部分：请求的 `execution` 缩减为 `{"mode": "ASYNC"}`，`check_request` **不拒绝** | 本组**倾向保持现状，且契约已如此处理**：`attempt` 是执行轮次计数，由执行方产生，请求阶段无从填写（本组请求的 `execution` 只声明 `mode` / `timeout_seconds` / `resources`）。请确认该口径，或在 `check_request` 中明确要求请求侧也带 `attempt` |
+
+#### 6.7.3 未受影响
+
+- `e2/task.schema.json`、`e2/validate.py`：**成员B 全程一行未动**（均为组长文件，改动一律走 Issue）。
+- 三件套 sha256 与 6.6 基线纠正后**完全一致**，见 6.5 第 2 部分的指纹表。
+- 转 A 组的 6 条（第 2、3、8、9 的 `trace_id` 部分、10、12 条）已由组长写入 A 组 Issue 的第二轮回复，见 `issue_draft.md`，**本组不重复提**。

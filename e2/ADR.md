@@ -156,7 +156,8 @@ REPAIR 的输入来自 FULL_CHECK 的检测报告，输出是一份能真正修�
 **负面 / 代价：**
 
 - `attempt` 在 DRAFT（Dockerfile 修订轮次）与 REPAIR（候选序号）中语义不同，**必须在文档中显式说明**，否则会被误读。
-- 与 A 组的差异：A 组 `execution.required = [mode, attempt]`，本仓库为 `[mode]`。本组样例始终携带 `attempt`，但**是否提为 schema 必填需组长裁决**（见 `e2/README.md` 6.3 第 4 条）。
+- 与 A 组的差异：A 组 `execution.required = [mode, attempt]`，本仓库原为 `[mode]`。本组样例始终携带 `attempt`，但**是否提为 schema 必填需组长裁决**（见 `e2/README.md` 6.3 第 4 条）。
+  → **2026-09-25 已裁决：提为必填**，本仓库 schema 已改为 `["mode", "attempt"]`，与 A 组一致。本决策因此由「B 组自定义语义」升格为 **schema 强制项** —— `attempt` 不再是可省略的补充记录，`stats` 与 `rejected_candidates` 也必须与之对账（3 个候选 / reject 2 / accept 1 ⇔ `attempt = 3`）。
 - `rejected_candidates` / `applied_findings` 是 B 组在 `output` 下的自定义键。`task.schema.json` 的 `output` 未封闭额外键，故当前合法；若日后收紧为 `additionalProperties: false`，需同步登记这两个键。
 
 ---
