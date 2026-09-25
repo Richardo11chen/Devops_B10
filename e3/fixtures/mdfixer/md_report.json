@@ -1,0 +1,56 @@
+{
+  "_comment": "课程人工构造的固定 MD 报告（ORACLE）。仅供 MDFixer 固定输入使用，detector 必须为 INSTRUCTOR_ORACLE，与真实运行日志区分。",
+  "schema_version": "1.0.0",
+  "report_id": "report-md001",
+  "report_type": "ERROR_REPORT",
+  "producer_job_id": "job-full01",
+  "producer_service": "BUILDCHECKER",
+  "trace_id": "trace-001",
+  "target_commit": "16a1490984aaa3904a80b6b433dfbed47d86a6ce",
+  "configuration_id": "cc-MODE0",
+  "detector": "INSTRUCTOR_ORACLE",
+  "generated_at": "2026-09-25T12:00:00Z",
+  "tool_version": "instructor-oracle/1.0",
+  "findings": [
+    {
+      "finding_id": "F-0001",
+      "type": "MISSING",
+      "target": "main.o",
+      "dependency": "config.h",
+      "commit": "16a1490984aaa3904a80b6b433dfbed47d86a6ce",
+      "detector": "INSTRUCTOR_ORACLE",
+      "location": {
+        "file": "main.c",
+        "line": 2,
+        "column": 1,
+        "kind": "INCLUDE",
+        "snippet": "#include \"config.h\""
+      },
+      "evidence_uri": "artifact://pair10/job-full01/evidence/F-0001.json",
+      "confidence": 1.0,
+      "fix_strategy": "append-dep-to-prerequisite",
+      "note": "main.o 编译期实际读取 config.h，但 Makefile 的 main.o 规则未声明该先决条件，导致改 config.h 后 make 不重建。"
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "missing_count": 1,
+    "redundant_count": 0,
+    "actionable_count": 1,
+    "by_detector": {
+      "INSTRUCTOR_ORACLE": 1
+    }
+  },
+  "provenance": {
+    "build_command": "make",
+    "verify_command": "make check",
+    "build_log_uri": "artifact://pair10/job-full01/build.log"
+  },
+  "human_review": {
+    "annotated": true,
+    "annotator": "成员D（Song Chengxuan）",
+    "annotated_at": "2026-09-25",
+    "method": "manual-makefile-read",
+    "note": "单条 MISSING 人工标注样本，用于 MDFixer 固定输入；对应 fixtures 内 Makefile 的 main.o 规则。"
+  }
+}
