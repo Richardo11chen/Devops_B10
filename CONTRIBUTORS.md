@@ -7,7 +7,7 @@ B10 组 4 人贡献表。每人一行，**提交后必须回填 Commit SHA 与 I
 | 陈奕澎（组长） | E2 DRAFT 契约确认、统一任务模型、校验脚本、仓库骨架 | `e2/contracts/dockerfile_job.*`<br>`e2/task.schema.json`<br>`e2/validate.py`<br>`e2/ADR.md`<br>`e2/Backlog.md`<br>`e2/AI_USAGE.md` | `7ff92ae`<br>`c370828`<br>`685f034` | [#1](../../issues/1) | 最小检查 01–04 全部通过（exit 0）；13 项变异测试全部被 schema 拒绝 |
 | 张少逸（成员B） | E2 REPAIR 契约确认 | `e2/contracts/repair_job.*`<br>`e2/README.md` 第 6 节<br>`e2/ADR.md` ADR-002 | `e74af37`<br>`29b5e14` | [#2](../../issues/2) | `python3 e2/validate.py` → 最小检查 01–04 全部通过（EXIT=0），`repair_job.*` 三处由 `SKIP` 变 `OK`；34 项变异测试全部被 schema 拒绝 |
 | 孙正奇（成员C） | E3 DRAFT 样本与 Docker 证据 | `e3/fixtures/draft/`<br>`e3/evidence/` | `b2c38a8` | [#4](../../issues/4)<br>[#5](../../pull/5) | 两层成功判据均达成；Broken 构建失败（exit 127，make: not found）；Reference 构建成功（exit 0）且容器运行输出 hello E3（exit 0） |
-| 成员D `<待填姓名>` | E3 MDFixer 样本与修复验证 | `e3/fixtures/mdfixer/`<br>`e3/evidence/` | `<待填>` | `<待填>` | `<待填>` |
+| 宋丞轩（成员D） | E3 MDFixer 样本与修复验证 | `e3/fixtures/mdfixer/`<br>`e3/evidence/`<br>`work/mdfixer-demo/` | `d3c86ca`<br>`aec91a4` | [#6](../../issues/6)<br>[#7](../../pull/7) | 六步修复验证通过（第5步不 clean 自动重建输出 v3）；无效候选三步反向验证通过；.d/-include 隐式规则验证通过。证据见 `e3/evidence/` |
 
 ## 组长完成记录
 
@@ -95,6 +95,25 @@ EXIT=0
 | ~~基线口径（`7720a30` vs `fec3fbe`）~~ | 已解决 | 三件套已按 A 组**两个基线共同成立**的事实重做；`e2/README.md` 6.2 改为双基线并列，新增 6.6 节给出逐文件差异与可复现核对命令 |
 | ~~Linux 环境复跑~~ | 已解决 | 已在 **Ubuntu 22.04.5 LTS（WSL2）/ Python 3.10.12 / jsonschema 3.2.0** 下复跑，`validate.py` 与 34 项变异测试结果与 Windows 侧逐项一致；`e2/README.md` 6.5 的环境标注已同步更新为 Linux |
 | 请求侧 `schema_version` 冲突 | 与 A 组实现直接冲突 | 沿用 `e2/README.md` 2.3 第 1 条，等 A 组定夺 |
+
+---
+
+## 成员D 完成记录
+
+**已完成内容**：MDFixer 固定输入四件套（固定 MD 报告 / 同一源码版本 Makefile / 构建命令与行为测试 / 预期声明风格）、`reference.patch`（Target 风格）、修复验证六步、无效候选三步反向验证、`.d` 隐式规则验证。
+
+| commit | 内容 |
+|--------|------|
+| `d3c86ca` | e3: 添加 MDFixer 固定输入四件套与 reference.patch |
+| `aec91a4` | e3: 添加 MDFixer 修复验证证据（六步 + 无效候选 + .d 隐式规则） |
+
+**验证结果**：六步修复验证通过（第 5 步不 clean 自动重建输出 v3 为决定性证据）；无效候选三步反向验证通过（注入失败命令后 `make` 非零退出 `Error 1`）；`.d`/`-include main.d` 隐式规则验证通过（`main.d` 含 `config.h`，改头文件自动重建）。证据见 `e3/evidence/`。
+
+**未完成项 / 下一步**：
+
+| 项 | 原因 | 下一步 |
+|----|------|--------|
+| 提 PR 合入 main | 分支已变基到 main，尚未创建 PR | 创建 PR 请求合并到 main |
 
 ---
 

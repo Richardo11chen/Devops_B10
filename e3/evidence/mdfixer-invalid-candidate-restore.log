@@ -1,0 +1,13 @@
+# ===== D.3 restore original Makefile -> builds + tests again =====
+# commit: 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+# expected: git checkout -- Makefile then make clean && make && make check all pass
+
+==> git checkout -- Makefile
+==> make clean
+rm -f main.o main main.d
+==> make
+gcc -I. -c main.c -o main.o
+gcc -o main main.o
+==> make check
+./main
+v1

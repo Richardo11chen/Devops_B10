@@ -1,0 +1,12 @@
+# ===== E.1 implicit style: build + .d content =====
+# commit: 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+# expected: make -f Makefile.implicit generates main.d listing config.h
+
+==> make -f Makefile.implicit clean
+rm -f main.o main main.d
+==> make -f Makefile.implicit
+gcc -MMD -MP -c main.c -o main.o
+gcc -o main main.o
+==> cat main.d
+main.o: main.c config.h
+config.h:

@@ -1,0 +1,5 @@
+commit 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+Author: Song Chengxuan <241880237@smail.nju.edu.cn>
+Date:   2026-09-25T12:57:25+08:00
+
+    C0: 初始版本（main.o 规则缺 config.h 依赖，MD 潜伏）

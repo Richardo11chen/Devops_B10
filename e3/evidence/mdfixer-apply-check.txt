@@ -1,0 +1,6 @@
+# ===== Step 2: git apply --check reference.patch =====
+# commit: 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+# expected: exit 0, no output (patch applies cleanly to C0 Makefile)
+
+==> git apply --check <fixtures>/reference.patch
+RESULT: apply --check PASSED (exit 0)

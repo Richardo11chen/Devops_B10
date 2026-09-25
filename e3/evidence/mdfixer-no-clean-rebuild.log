@@ -1,0 +1,11 @@
+# ===== Step 5: edit config.h -> auto rebuild (NO clean) =====
+# commit: 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+# state: Makefile fixed (uncommitted), config.h = v2
+# expected: edit config.h v2 -> v3, make (NO clean) recompiles main.o, ./main prints v3
+
+==> edit config.h v2 -> v3
+==> make (no clean, expect gcc recompile)
+gcc -I. -c main.c -o main.o
+gcc -o main main.o
+==> ./main (expect v3)
+v3

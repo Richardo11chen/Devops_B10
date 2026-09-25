@@ -1,0 +1,10 @@
+# ===== E.2 implicit style: header change auto rebuild =====
+# commit: 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+# expected: edit config.h v1 -> v4, make -f Makefile.implicit (no clean) rebuilds
+
+==> edit config.h v1 -> v4
+==> make -f Makefile.implicit (no clean, expect rebuild)
+gcc -MMD -MP -c main.c -o main.o
+gcc -o main main.o
+==> ./main (expect v4)
+v4
