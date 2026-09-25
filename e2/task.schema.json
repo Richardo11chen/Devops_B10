@@ -140,7 +140,11 @@
           "type": "object",
           "description": "资源限制或占用，如 cpu / memory_mb",
           "properties": {
-            "cpu": { "type": "string" },
+            "cpu": {
+              "type": "string",
+              "minLength": 1,
+              "description": "CPU 配额字符串，例如 2、0.5 或 2000m。"
+            },
             "memory_mb": { "type": "integer", "minimum": 1 }
           }
         }

@@ -38,25 +38,50 @@
 
 ---
 
-## 二、A 组对 7 个议题的回应现状
+## 二、A 组回应与最终对齐结果
 
-A 组在 `fec3fbe` 中逐条回应：
+A 组分两轮回应：`fec3fbe`（2026-09-24）、`462eb5e`（2026-09-25）。
+**7 个议题 + 6 点后续全部解决，两组 `task.schema.json` 已逐字段比对一致。**
 
-| 议题 | A 组处理 | 状态 |
-|------|----------|------|
-| 1 请求带 `schema_version` | ✅ 已加 | **部分解决** —— `trace_id` 仍未加 |
-| 2 `execution` 入 schema | ⚠️ 加了，但定为**可选** | **与课程冲突**，见裁决第 3 条 |
-| 3 响应 `input` 填副本 | ✅ 定稿为请求副本 | ✅ 已对齐 |
-| 4 `output.artifacts[]` | ✅ 四类响应全改，删裸字段 | ✅ 已对齐 |
-| 5 `required` 扩容 | ⚠️ 扩到 7 项，含 `created_at`、**不含 `execution`** | 见裁决第 5 条 |
-| 6 `sha256` 必需 | ✅ | ✅ 已对齐 |
-| 7 产物 URI 约定 | ✅ `artifact://<pair_id>/<job_id>/<relative_path>` | ✅ 已对齐 |
+### 第一轮（`fec3fbe`）
 
-**新发现的 A 组自相矛盾处：**
+| 议题 | 处理 |
+|------|------|
+| 1 请求带 `schema_version` | ✅ 已加（`trace_id` 留到第二轮） |
+| 2 `execution` 入 schema | ⚠️ 加了但定为**可选** → 第二轮纠正 |
+| 3 响应 `input` 填副本 | ✅ 定稿为请求副本 |
+| 4 `output.artifacts[]` | ✅ 四类响应全改，删裸字段 |
+| 5 `required` 扩容 | ⚠️ 含 `created_at` 不含 `execution` → 第二轮纠正 |
+| 6 `sha256` 必需 | ✅ |
+| 7 产物 URI 约定 | ✅ |
 
-1. `dockerfile_job.req.json` 同时存在 `input.deadline_sec: 1800` 与 `execution.timeout_seconds: 600` —— 同一个超时写了两处，且值不同（裁决第 12 条）
-2. `execution.resources.cpu` 为整数 `2`，B 组为字符串 `"2"`（裁决第 2 条）
-3. A 组失败样例缺 `execution`（裁决第 3 条）
+### 第二轮（`462eb5e`，针对 B10 提出的 6 点）
+
+| # | 问题 | A 组提交 | 结果 |
+|---|------|----------|------|
+| 1 | `execution` 应进 `required` | `d031660` / `711ed28` | ✅ 已进 |
+| 2 | `deadline_sec` 与 `timeout_seconds` 双写且值不同 | `4f3ee56` | ✅ 删除 `input.deadline_sec`，统一 `execution.timeout_seconds: 600` |
+| 3 | `resources.cpu` 类型 | `4f3ee56` | ✅ 统一为 `string` |
+| 4 | 修复器崩溃无错误码可依 | `feaf7cf` | ✅ 新增 `ANALYSIS_5002`，并补三方对照表（候选全败 / 超时 / 自身崩溃） |
+| 5 | 候选全败与超时混写 | `462eb5e` | ✅ `repair_job_err` = `EXEC_4003`+`FAILED`；新增 `repair_job_timeout` = `EXEC_4002`+`TIMED_OUT` |
+| 6 | 请求缺 `trace_id` | `98104b3` | ✅ 四个请求样例全部补齐 |
+
+### 逐字段比对（2026-09-25，A 组 `462eb5e` vs B 组）
+
+用脚本比对两组 `task.schema.json`：
+
+| 检查项 | 结果 |
+|--------|------|
+| 顶层 `required`（8 项） | ✅ 一致 |
+| 顶层 `properties`（11 项） | ✅ 一致 |
+| `execution.required` = `["mode","attempt"]` | ✅ 一致 |
+| `execution.properties`（7 项） | ✅ 一致 |
+| `artifact.required`（6 项） | ✅ 一致 |
+| 产物 `type` 枚举（10 项） | ✅ 一致 |
+| `trace_id` pattern | ✅ 一致 |
+| `resources.cpu` | ✅ 已抹平（B 组补 `minLength: 1` 与说明文字） |
+
+> 配对契约收敛完成。**两组对外承诺的接口形状现在完全相同。**
 
 ---
 
@@ -100,9 +125,10 @@ EXIT=0
 
 | 项 | 负责 | 状态 |
 |----|------|------|
-| 回复 A 组 Issue #2（裁决第 2、3、8、10、12 条） | 组长 | ✅ 已完成，已作为 Issue 评论发出 |
-| `dockerfile_job.*` 三件套是否需跟着改 | 组长 | ✅ 已确认无需改动（本已满足新约束） |
-| 成员B 的 `repair_job.*` 是否满足新约束 | 成员B | ✅ 已复跑，三处由 `SKIP` 变 `OK` |
-| 两个成员分支合入 `main` | 组长 | ✅ 已合并（PR #3 / PR #5），冲突已手工解决 |
-| 等 A 组对第二轮 6 点的回应 | A 组 | ⏳ 等待中 |
-| 成员D 的 E3 MDFixer 固定输入 | 成员D | ⏳ **尚未开始**（当前唯一缺口） |
+| 回复 A 组 Issue #2（第二轮 6 点） | 组长 | ✅ 已作为 Issue 评论发出 |
+| 12 条裁决的 B 组侧执行 | 组长 | ✅ 已改完 `task.schema.json` 与 `validate.py` |
+| 三个成员分支合入 `main` | 组长 | ✅ PR #3 / #5 / #7 全部合并并推送 |
+| A 组对第二轮 6 点的回应 | A 组 | ✅ 已全部改完（`462eb5e`） |
+| 两组 `task.schema.json` 逐字段比对 | 组长 | ✅ 全部一致 |
+| 成员B / 成员C / 成员D 的产出 | 各成员 | ✅ 均已合并（E2 REPAIR / E3 DRAFT / E3 MDFixer） |
+| T-008 AI 使用记录 | 全体 | 🔄 持续追加，按设计无终点 |
