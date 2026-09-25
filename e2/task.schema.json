@@ -12,7 +12,8 @@
     "job_type",
     "status",
     "execution",
-    "input"
+    "input",
+    "created_at"
   ],
 
   "properties": {
@@ -28,8 +29,8 @@
     },
     "trace_id": {
       "type": "string",
-      "minLength": 1,
-      "description": "一次平台流程的串联 ID"
+      "pattern": "^trace-[a-z0-9-]+$",
+      "description": "一次平台流程的串联 ID，由发起方产生，跨 A/B 两组任务保持不变"
     },
     "job_type": {
       "enum": ["DRAFT", "FULL_CHECK", "INCREMENTAL_CHECK", "REPAIR"],
@@ -104,7 +105,7 @@
     "execution": {
       "type": "object",
       "description": "执行元信息。记录这次任务是怎么跑的，不含业务输入与产出",
-      "required": ["mode"],
+      "required": ["mode", "attempt"],
       "properties": {
         "mode": {
           "type": "string",
@@ -171,19 +172,21 @@
     "artifact": {
       "type": "object",
       "description": "产物引用。Job 只保存元数据，大文件通过 URI 交接",
-      "required": ["artifact_id", "type", "uri", "producer_job_id"],
+      "required": ["artifact_id", "type", "uri", "media_type", "producer_job_id", "sha256"],
       "properties": {
         "artifact_id": { "type": "string", "minLength": 1 },
         "type": {
           "enum": [
-            "DOCKERFILE",
-            "IMAGE_REF",
-            "GIT_PATCH",
-            "BUILD_LOG",
             "ACTUAL_GRAPH",
             "DECLARED_GRAPH",
             "MD_REPORT",
-            "RD_REPORT"
+            "RD_REPORT",
+            "ERROR_REPORT",
+            "BUILD_LOG",
+            "VERIFY_LOG",
+            "DOCKERFILE",
+            "IMAGE_REF",
+            "GIT_PATCH"
           ]
         },
         "uri": {

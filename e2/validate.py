@@ -121,8 +121,9 @@ def builtin_valid_job(job_type: str) -> dict:
             "actual_graph_uri": "artifact://pair10/job-fullcheck/actual.json",
         }
     if job_type == "REPAIR":
+        # 注意：不要在此添加 input.source_commit —— 契约中无此字段，
+        # 源码版本一律由 input.repository.commit 表达（成员B 提出，2026-09-25 采纳）。
         base_input["md_report_uri"] = "artifact://pair10/job-fullcheck/md.json"
-        base_input["source_commit"] = "c" * 40
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -130,6 +131,7 @@ def builtin_valid_job(job_type: str) -> dict:
         "trace_id": "trace-010",
         "job_type": job_type,
         "status": "SUCCEEDED",
+        "created_at": "2026-09-23T07:00:00Z",
         "execution": _execution(),
         "input": base_input,
         "output": {"artifacts": [_artifact(job_id)]},

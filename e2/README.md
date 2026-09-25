@@ -60,8 +60,13 @@ B 组负责 **DRAFT** 与 **MDFixer** 两个服务的接口约定。E2 **不部�
 
 ### 2.3 还需与 A 组讨论什么
 
-按优先级排列。以下 7 条已提为 A 组仓库 Issue **[ana12-21/Devops_G10#2](https://github.com/ana12-21/Devops_G10/issues/2)**，
-正文见 `issue_draft.md` 的「向 A 组提 Issue 的正文」一节。**B10 不直接修改 A 组仓库**，只通过该 Issue 沟通。
+以下 7 条已提为 A 组仓库 Issue **[ana12-21/Devops_G10#2](https://github.com/ana12-21/Devops_G10/issues/2)**。
+**B10 不直接修改 A 组仓库**，只通过该 Issue 沟通。
+
+**最新进展（2026-09-25）**：A 组已在 `fec3fbe` 中逐条回应，**5 条已对齐**（议题 3、4、6、7，以及议题 1 的 `schema_version` 部分）。
+剩余 6 点待 A 组处理，**完整裁决与执行方见 [`resolutions.md`](resolutions.md)**。
+
+下表为初次提出时的原始记录，保留以追溯来龙去脉：
 
 | # | 问题 | 冲突点 | B 组倾向 |
 |---|------|--------|----------|
