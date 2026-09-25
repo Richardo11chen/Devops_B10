@@ -5,7 +5,7 @@ B10 组 4 人贡献表。每人一行，**提交后必须回填 Commit SHA 与 I
 | 姓名 | 负责模块 | 主要文件 | Commit SHA | Issue/PR | 验证结果 |
 |------|----------|----------|------------|----------|----------|
 | 陈奕澎（组长） | E2 DRAFT 契约确认、统一任务模型、校验脚本、仓库骨架 | `e2/contracts/dockerfile_job.*`<br>`e2/task.schema.json`<br>`e2/validate.py`<br>`e2/ADR.md`<br>`e2/Backlog.md`<br>`e2/AI_USAGE.md` | `7ff92ae`<br>`c370828`<br>`685f034` | [#1](../../issues/1) | 最小检查 01–04 全部通过（exit 0）；13 项变异测试全部被 schema 拒绝 |
-| 张少逸（成员B） | E2 REPAIR 契约确认 | `e2/contracts/repair_job.*`<br>`e2/README.md` 第 6 节<br>`e2/ADR.md` ADR-002 | `e74af37`<br>`29b5e14` | [#2](../../issues/2) | `python3 e2/validate.py` → 最小检查 01–04 全部通过（EXIT=0），`repair_job.*` 三处由 `SKIP` 变 `OK`；34 项变异测试全部被 schema 拒绝 |
+| 张少逸（成员B） | E2 REPAIR 契约确认 | `e2/contracts/repair_job.*`<br>`e2/README.md` 第 6 节<br>`e2/ADR.md` ADR-002 | `e74af37`<br>`29b5e14`<br>`c434742`<br>`13f10a4` | [#2](../../issues/2)<br>[PR #3](../../pull/3)<br>[PR #8](../../pull/8) | `python3 e2/validate.py` → 最小检查 01–04 全部通过（EXIT=0），`repair_job.*` 三处由 `SKIP` 变 `OK`；**44 项变异全部被拒绝**（另 3 项正向对照被接受、2 项已知缺口已上报）。二次同步最新 `main`（`aad384e`）后复跑结论不变 |
 | 孙正奇（成员C） | E3 DRAFT 样本与 Docker 证据 | `e3/fixtures/draft/`<br>`e3/evidence/` | `b2c38a8` | [#4](../../issues/4)<br>[#5](../../pull/5) | 两层成功判据均达成；Broken 构建失败（exit 127，make: not found）；Reference 构建成功（exit 0）且容器运行输出 hello E3（exit 0） |
 | 宋丞轩（成员D） | E3 MDFixer 样本与修复验证 | `e3/fixtures/mdfixer/`<br>`e3/evidence/`<br>`work/mdfixer-demo/` | `d3c86ca`<br>`aec91a4` | [#6](../../issues/6)<br>[#7](../../pull/7) | 六步修复验证通过（第5步不 clean 自动重建输出 v3）；无效候选三步反向验证通过；.d/-include 隐式规则验证通过。证据见 `e3/evidence/` |
 
@@ -70,8 +70,12 @@ EXIT=0
 |--------|------|
 | `e74af37` | e2: 确认 REPAIR 契约并补 trace_id / execution / 产物枚举对齐（初版） |
 | `29b5e14` | e2: 按双基线（`7720a30` / `fec3fbe`）重做三件套与第 6 节 —— 恢复 `input.makefile_uri`、`max_candidates` 移回 `input.options`、删除来源不明的 `source_commit`、`commit` 占位符改回 `<C0_FULL_40_SHA>` |
+| `48586d7` | Merge `origin/main`（`70776a7` 裁决提交）—— 零冲突合入，三件套未改动 |
+| `c434742` | e2: 落地 12 条裁决并修正因枚举扩容而失效的论据 —— README 6.2 第 6 条重写理由、6.3 加裁决列、6.5 扩为 44+3+2、新增 6.7 |
 
-**验证结果**（Ubuntu 22.04.5 LTS（WSL2）/ Python 3.10.12 / jsonschema 3.2.0）：
+**验证结果**：
+
+**（1）裁决前** —— 2026-09-24，Ubuntu 22.04.5 LTS（WSL2）/ Python 3.10.12 / jsonschema 3.2.0，当时 `task.schema.json` 为 `required=7` 项：
 
 ```bash
 $ python3 e2/validate.py
@@ -84,17 +88,31 @@ $ python3 e2/validate.py
 EXIT=0
 ```
 
-另做 **34 项变异测试**（删 `execution`、`resources.cpu` 改整数、产物 `type` 改 `VERIFY_LOG`、`sha256` 截短、`FAILED` 删 `error`、请求携带 `status` 等），**全部被 `task.schema.json` / `check_request` 拒绝**。
+**（2）裁决后** —— 2026-09-25，合并组长裁决提交 `70776a7` 并按收紧后的 schema 复跑：
+
+```bash
+$ python3 e2/validate.py
+task.schema.json 已加载（required=8 项，properties=11 项）
+...
+最小检查 01–04 全部通过。
+EXIT=0
+```
+
+`required` 由 7 项增至 8 项（补 `created_at`）、`execution.required` 加 `attempt`、`trace_id` 加 `pattern`、`artifact.required` 加 `media_type`/`sha256`、产物枚举 8 → 10 项 —— **本组三件套一行未改即全部通过**，且 sha256 与裁决前**完全一致**。
+
+**反空壳共 49 项**：44 项变异**全部被拒绝**（含裁决新增的 `created_at`、`execution.attempt`、`trace_id` pattern、`media_type`、`sha256` 共 7 项）；另设 **3 项正向对照全部被接受**（产物 `type` 用 `VERIFY_LOG` / `ERROR_REPORT` 应合法 —— 证明裁决第 1 条的枚举扩容真的生效）；**2 项已知缺口**已确认并作为新发现上报（`check_request` 未校验 `trace_id` 的 pattern、未校验 `execution.attempt`，见 `e2/README.md` 6.7.2）。
 
 **未完成项 / 下一步**：
 
 | 项 | 原因 | 下一步 |
 |----|------|--------|
-| ~~本行姓名与 Commit SHA~~ | 已解决 | 已回填姓名「张少逸」与 `e74af37` |
-| 与 A 组 / 组长的 12 条待议项 | 涉及 `task.schema.json`（组长文件）与 A 组仓库，成员B 无权单方面修改 | 见 `e2/README.md` 第 6.3 节 |
+| ~~本行姓名与 Commit SHA~~ | 已解决 | 已回填姓名「张少逸」与提交 SHA |
+| ~~与 A 组 / 组长的 12 条待议项~~ | 已解决 | 组长 2026-09-25 已**全部裁决**（见 `e2/resolutions.md`）：B 组侧 6 条已落地，6 条转 A 组处理，本组不重复提 |
 | ~~基线口径（`7720a30` vs `fec3fbe`）~~ | 已解决 | 三件套已按 A 组**两个基线共同成立**的事实重做；`e2/README.md` 6.2 改为双基线并列，新增 6.6 节给出逐文件差异与可复现核对命令 |
-| ~~Linux 环境复跑~~ | 已解决 | 已在 **Ubuntu 22.04.5 LTS（WSL2）/ Python 3.10.12 / jsonschema 3.2.0** 下复跑，`validate.py` 与 34 项变异测试结果与 Windows 侧逐项一致；`e2/README.md` 6.5 的环境标注已同步更新为 Linux |
-| 请求侧 `schema_version` 冲突 | 与 A 组实现直接冲突 | 沿用 `e2/README.md` 2.3 第 1 条，等 A 组定夺 |
+| ~~Linux 环境复跑~~ | 已解决 | 裁决前已在 **Ubuntu 22.04.5 LTS（WSL2）** 下复跑，结果与 Windows 侧逐项一致；裁决后复跑记录见 `e2/README.md` 6.5 第 2 部分（含 WSL 侧复现命令） |
+| ~~请求侧 `schema_version` 冲突~~ | 已解决 | 裁决第 9 条：A 组已加入 `schema_version`；`trace_id` 部分转 A 组继续追 |
+| **分支推送与 PR** | 本地凭据助手为 `helper-selector`，需交互式登录，无法在脚本中完成 | 由本人在终端执行 `git push -u origin memberB/e2-repair-contract`，再开 PR 到 `main`（正文见 `.workbuddy/plans/pr_body.md`） |
+| 本轮新发现 3 条 | 涉及 `e2/validate.py`（组长文件）与两组 `verify.log` 取值口径 | 见 `e2/README.md` 6.7.2，待组长定夺 |
 
 ---
 
