@@ -1,0 +1,28 @@
+# ===== D.2 invalid candidate: inject failing command =====
+# commit: 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+# expected: inject false into main recipe, then make clean && make exits non-zero
+
+==> sed inject false after main: main.o
+==> git diff -- Makefile (the bad candidate)
+diff --git a/Makefile b/Makefile
+index b3b020c..aea45f4 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,6 +2,7 @@ CC      = gcc
+ CFLAGS  = -I.
+ 
+ main: main.o
++	false
+ 	$(CC) -o $@ $^
+ 
+ main.o: main.c
+
+==> make clean
+rm -f main.o main main.d
+==> make (expect non-zero exit)
+gcc -I. -c main.c -o main.o
+false
+make: *** [Makefile:5: main] Error 1
+RESULT: make FAILED (non-zero exit, as expected)
+
+==> restore Makefile

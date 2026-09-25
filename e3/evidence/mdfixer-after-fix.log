@@ -1,0 +1,12 @@
+# ===== Step 4: make clean && make -> new value =====
+# commit: 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+# state: Makefile fixed (uncommitted), config.h = v2
+# expected: rebuild -> ./main prints v2
+
+==> make clean
+rm -f main.o main main.d
+==> make
+gcc -I. -c main.c -o main.o
+gcc -o main main.o
+==> ./main (expect v2)
+v2
