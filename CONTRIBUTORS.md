@@ -5,7 +5,7 @@ B10 组 4 人贡献表。每人一行，**提交后必须回填 Commit SHA 与 I
 | 姓名 | 负责模块 | 主要文件 | Commit SHA | Issue/PR | 验证结果 |
 |------|----------|----------|------------|----------|----------|
 | 陈奕澎（组长） | E2 DRAFT 契约确认、统一任务模型、校验脚本、仓库骨架 | `e2/contracts/dockerfile_job.*`<br>`e2/task.schema.json`<br>`e2/validate.py`<br>`e2/ADR.md`<br>`e2/Backlog.md`<br>`e2/AI_USAGE.md` | `7ff92ae`<br>`c370828`<br>`685f034` | [#1](../../issues/1) | 最小检查 01–04 全部通过（exit 0）；13 项变异测试全部被 schema 拒绝 |
-| 张少逸（成员B） | E2 REPAIR 契约确认 | `e2/contracts/repair_job.*`<br>`e2/README.md` 第 6 节<br>`e2/ADR.md` ADR-002 | `e74af37`<br>`29b5e14`<br>`c434742` | [#2](../../issues/2)<br>[PR #3](../../pull/3) | `python3 e2/validate.py` → 最小检查 01–04 全部通过（EXIT=0），`repair_job.*` 三处由 `SKIP` 变 `OK`；**44 项变异全部被拒绝**（另 3 项正向对照被接受、2 项已知缺口已上报） |
+| 张少逸（成员B） | E2 REPAIR 契约确认 | `e2/contracts/repair_job.*`<br>`e2/README.md` 第 6 节<br>`e2/ADR.md` ADR-002 | `e74af37`<br>`29b5e14`<br>`c434742`<br>`13f10a4` | [#2](../../issues/2)<br>[PR #3](../../pull/3) | `python3 e2/validate.py` → 最小检查 01–04 全部通过（EXIT=0），`repair_job.*` 三处由 `SKIP` 变 `OK`；**44 项变异全部被拒绝**（另 3 项正向对照被接受、2 项已知缺口已上报）。二次同步最新 `main`（`aad384e`）后复跑结论不变 |
 | 孙正奇（成员C） | E3 DRAFT 样本与 Docker 证据 | `e3/fixtures/draft/`<br>`e3/evidence/` | `b2c38a8` | [#4](../../issues/4)<br>[#5](../../pull/5) | 两层成功判据均达成；Broken 构建失败（exit 127，make: not found）；Reference 构建成功（exit 0）且容器运行输出 hello E3（exit 0） |
 | 宋丞轩（成员D） | E3 MDFixer 样本与修复验证 | `e3/fixtures/mdfixer/`<br>`e3/evidence/`<br>`work/mdfixer-demo/` | `d3c86ca`<br>`aec91a4` | [#6](../../issues/6)<br>[#7](../../pull/7) | 六步修复验证通过（第5步不 clean 自动重建输出 v3）；无效候选三步反向验证通过；.d/-include 隐式规则验证通过。证据见 `e3/evidence/` |
 
