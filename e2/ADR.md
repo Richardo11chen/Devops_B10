@@ -5,7 +5,7 @@
 | 编号 | 标题 | 负责人 | 状态 |
 |------|------|--------|------|
 | ADR-001 | 采用异步 Job 模式表达四类任务 | 组长 | 已定稿 |
-| ADR-002 | （待成员B补充：REPAIR 相关决策） | 成员B | 待写 |
+| ADR-002 | 以候选轮次表达 REPAIR 的迭代语义 | 成员B | 已定稿 |
 
 ---
 
@@ -97,12 +97,76 @@ POST /v1/incremental-check-jobs
 
 ---
 
+## ADR-002：以候选轮次表达 REPAIR 的迭代语义
+
+**状态**：已定稿（2026-09-24）
+
+**Supersedes**：无
+
+### Context
+
+四类任务中，DRAFT 与 REPAIR 都会「反复试」，但试的对象不同：
+
+| 任务 | 每一轮改的是什么 | 轮次之间是否互相影响 |
+|------|------------------|----------------------|
+| DRAFT | Dockerfile 的修订 | 是，后一轮基于前一轮的失败日志 |
+| REPAIR | **候选 patch**（对源码的修改方案） | 否，候选彼此独立，逐个试用 |
+
+REPAIR 的输入来自 FULL_CHECK 的检测报告，输出是一份能真正修好缺失依赖的补丁。多候选逐个尝试意味着契约必须同时回答两个问题：**试到第几轮了**、**被淘汰的候选为什么不行**。
+
+`execution.attempt` 在 A、B 两组实现中都被解释为「第几次尝试」，可直接复用；但 REPAIR 的一轮尝试 = 一个候选 patch，语义与 DRAFT 不同，需要显式定义。
+
+### Alternatives
+
+| 方案 | 说明 | 为什么不选 |
+|------|------|-----------|
+| A. 只记录 `execution.attempt` | 用整数表示试到第几轮 | 能回答「试了几轮」，但回答不了「为什么前几轮不行」，排障时仍需翻日志 |
+| **B. `execution.attempt` + `output.rejected_candidates[]`** | 轮次用 `attempt`，被淘汰候选逐条记录摘要、失败阶段与理由 | **选中** |
+| C. 每个候选开一个独立 Job | 一个候选一个 `job_id`，任务链经 `trace_id` 串联 | 单次修复被拆成多个 Job，`max_candidates` 失去意义；产物交接复杂化，且与「四类任务共用一套外壳」的设计冲突 |
+| D. 不记录被淘汰的候选 | 只保留最终成功的补丁 | 修复过程不可追溯，评审无法判断是「真试了多轮」还是第一次就恰好命中 |
+
+### Decision
+
+**采用方案 B。** 约定如下。
+
+**1. `execution.attempt` 在 REPAIR 中的语义是「候选轮次」**，从 1 起递增：成功时等于最终被接受候选的序号，失败时等于已尝试的候选总数。
+
+**2. `output.rejected_candidates[]`** 逐条记录被淘汰的候选：
+
+```json
+{ "candidate": 1, "summary": "…", "rejected_at": "build|verify", "reason": "…", "log_uri": "artifact://…" }
+```
+
+`rejected_at` 取值限定 `build` / `verify`，对应 E3 要求的两层成功判据。
+
+**3. `output.applied_findings[]` 只回填 `type = "MISSING"` 的条目**，与检测报告的 `findings` 逐条对应；`REDUNDANT` 不进修复路径。
+
+**4. `output.recheck`** 记录补丁应用后重跑的 build 与 verify 退出码 —— 修复成立的判据是「改完之后两层仍通过」，不能沿用修复前的结论。
+
+**5. 候选日志一并列入 `output.artifacts[]`**，遵循 A 组议题 4 的口径：所有产物引用统一经 `artifacts[]` 交接。
+
+### Consequences
+
+**正面：**
+
+- 「试了几轮」与「每轮为什么被否」都可机器读取，修复过程可复现、可评审。
+- `rejected_at` 直接区分「编译就不过」与「编译过但行为没变」，与 E3 的两层判据对应。
+- 复用已有的 `execution.attempt`，不需要新增公共字段，属 ADR-001 定义的**可兼容变化**。
+
+**负面 / 代价：**
+
+- `attempt` 在 DRAFT（Dockerfile 修订轮次）与 REPAIR（候选序号）中语义不同，**必须在文档中显式说明**，否则会被误读。
+- 与 A 组的差异：A 组 `execution.required = [mode, attempt]`，本仓库为 `[mode]`。本组样例始终携带 `attempt`，但**是否提为 schema 必填需组长裁决**（见 `e2/README.md` 6.3 第 4 条）。
+- `rejected_candidates` / `applied_findings` 是 B 组在 `output` 下的自定义键。`task.schema.json` 的 `output` 未封闭额外键，故当前合法；若日后收紧为 `additionalProperties: false`，需同步登记这两个键。
+
+---
+
 ## 待补充的决策位
 
 <details>
 <summary>成员B / 成员C / 成员D 如遇到需要记录的决策，在此追加 ADR-002 及以后</summary>
 
-- ADR-002：REPAIR 任务的迭代语义（成员B）
+- ~~ADR-002：REPAIR 任务的迭代语义（成员B）~~ —— 已定稿，见上
 - ADR-003：DRAFT 样本的构建环境固定策略（成员C）
 - ADR-004：MDFixer 声明风格的选择依据（成员D）
 
