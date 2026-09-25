@@ -1,0 +1,20 @@
+# ===== Step 1: MD symptom (before fix) =====
+# version: C0 (main.o rule missing config.h)
+# commit: 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+# gcc: gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+# make: GNU Make 4.3
+# expected: edit config.h -> make does NOT rebuild -> ./main still prints v1
+
+==> make clean
+rm -f main.o main main.d
+==> make
+gcc -I. -c main.c -o main.o
+gcc -o main main.o
+==> ./main (expect v1)
+v1
+
+==> edit config.h v1 -> v2
+==> make (no clean, expect up to date)
+make: 'main' is up to date.
+==> ./main (expect still v1, NOT v2)
+v1

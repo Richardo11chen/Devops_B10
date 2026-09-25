@@ -103,6 +103,7 @@
 **标题**：`[B10][成员C] E3 DRAFT 样本与 Docker 证据`
 
 **建议分支名**：`memberC/e3-draft-fixtures`
+**状态**：✅ **已完成**（2026-09-24）。已正式创建为本仓库 Issue [#4](../../issues/4) 与 PR [#5](../../pull/5)。
 
 ### 目标
 
@@ -114,31 +115,49 @@
 |------|------|
 | `e3/fixtures/draft/Dockerfile.broken` | 失败候选 |
 | `e3/fixtures/draft/Dockerfile.reference` | 参考成功 |
-| `e3/fixtures/draft/` | 被测源码 + 运行说明 |
-| `e3/evidence/` | 构建日志、退出码、镜像 ID、diff |
+| `e3/fixtures/draft/main.c`、`Makefile` | 被测源码与构建规则 |
+| `e3/fixtures/draft/README.md` | 测试基线说明与两层判据复现命令 |
+| `e3/evidence/` | 构建日志、退出码、镜像 ID、diff、功能验证日志 |
 
 ### 验收条件
 
 **两层成功判据缺一不可：**
 
-- [ ] 第一层编译通过：构建命令退出码 0，预期可执行文件生成，**保存构建日志**
-- [ ] 第二层功能验证：运行 README 约定测试，检查退出码与预期输出，**测试失败也要记录**
+- [x] 第一层编译通过：构建命令退出码 0，预期可执行文件生成，**保存构建日志**
+- [x] 第二层功能验证：运行 README 约定测试，检查退出码与预期输出，**测试失败也要记录**
 
 **两个候选达标：**
 
-- [ ] `Dockerfile.broken` 基于 `python:3.13-slim`，直接 `RUN make`，预期非零退出，日志出现 `make: not found`
-- [ ] `Dockerfile.reference` 安装 `gcc make libc6-dev`，预期构建成功，容器内输出 `hello E3`
+- [x] `Dockerfile.broken` 基于 `python:3.13-slim`，直接 `RUN make`，预期非零退出，日志出现 `make: not found`
+- [x] `Dockerfile.reference` 安装 `gcc make libc6-dev`，预期构建成功，容器内输出 `hello E3`
 
 **证据齐备：**
 
-- [ ] 保存 Dockerfile diff、build 退出码、日志、镜像 ID
-- [ ] 基线四要素齐全：固定版本与环境、本次修改/故障是什么、预期输出及依据、可重跑命令
-- [ ] 别人能按 `e3/fixtures/draft/README.md` 原样跑通
-- [ ] 人工标注 `ORACLE` 来源，与实际运行日志分清
+- [x] 保存 Dockerfile diff、build 退出码、日志、镜像 ID
+- [x] 基线四要素齐全：固定版本与环境、本次修改/故障是什么、预期输出及依据、可重跑命令
+- [x] 别人能按 `e3/fixtures/draft/README.md` 原样跑通
+- [x] 人工标注 `ORACLE` 来源，与实际运行日志分清
+
+### 完成情况
+
+**分支**：`memberC/e3-draft-fixtures`
+
+| commit | 内容 |
+|--------|------|
+| `b2c38a8` | e3: 添加 DRAFT 失败与参考成功样本及构建证据 |
+
+**验证结果**：
+1. **第一层判据**：
+   - Broken 候选：构建退出码 127，日志定位到 `/bin/sh: 1: make: not found`。
+   - Reference 候选：构建退出码 0，成功生成镜像 `b10-draft-reference:latest`（ID: `eca1d90eb03f`）。
+2. **第二层判据**：
+   - 容器内运行 `./hello`，退出码 0，标准输出 `hello E3`。
+3. **证据文件**：
+   - `e3/evidence/` 下包含 diff、退出码、构建日志、镜像 ID 及功能验证日志。
 
 ### 备注
 
-全部命令在 **Linux + docker** 下运行。证据目录**每次运行新建，保留旧证据**。
+全部命令在 **Linux + docker** 下运行。证据目录**每次运行新建场景文件，保留旧证据**。
 
 ---
 

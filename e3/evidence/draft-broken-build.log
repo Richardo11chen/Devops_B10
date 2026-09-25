@@ -1,0 +1,17 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  12.29kB
+Step 1/5 : FROM python:3.13-slim
+ ---> 8d9d0b8bcf65
+Step 2/5 : WORKDIR /work
+ ---> Running in 53f7f2cf8dfd
+ ---> Removed intermediate container 53f7f2cf8dfd
+ ---> 86e48201ca6c
+Step 3/5 : COPY main.c Makefile ./
+ ---> 8c3fc107c0b7
+Step 4/5 : RUN make
+ ---> Running in 444801173d91
+[91m/bin/sh: 1: make: not found
+[0mThe command '/bin/sh -c make' returned a non-zero code: 127

@@ -1,0 +1,21 @@
+# ===== Step 3: git apply reference.patch =====
+# commit: 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+# expected: Makefile now has main.o: main.c config.h (uncommitted change)
+
+==> git apply <fixtures>/reference.patch
+RESULT: applied OK
+
+==> git diff -- Makefile
+diff --git a/Makefile b/Makefile
+index b3b020c..a5f0a90 100644
+--- a/Makefile
++++ b/Makefile
+@@ -4,7 +4,7 @@ CFLAGS  = -I.
+ main: main.o
+ 	$(CC) -o $@ $^
+ 
+-main.o: main.c
++main.o: main.c config.h
+ 	$(CC) $(CFLAGS) -c $< -o $@
+ 
+ .PHONY: check clean

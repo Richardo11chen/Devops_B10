@@ -1,0 +1,5 @@
+commit f58876392b157eb121f9bc2a30ca0566e69db4c2
+Author: Song Chengxuan <241880237@smail.nju.edu.cn>
+Date:   2026-09-25T12:57:25+08:00
+
+    C1: 修复 MD——main.o 规则补 config.h 先决条件

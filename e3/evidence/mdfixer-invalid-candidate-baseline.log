@@ -1,0 +1,12 @@
+# ===== D.1 baseline: original copy builds + tests =====
+# commit: 16a1490984aaa3904a80b6b433dfbed47d86a6ce
+# expected: make clean && make && make check all pass, ./main prints v1
+
+==> make clean
+rm -f main.o main main.d
+==> make
+gcc -I. -c main.c -o main.o
+gcc -o main main.o
+==> make check
+./main
+v1

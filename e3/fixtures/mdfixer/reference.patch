@@ -1,0 +1,13 @@
+diff --git a/Makefile b/Makefile
+index b3b020c..a5f0a90 100644
+--- a/Makefile
++++ b/Makefile
+@@ -4,7 +4,7 @@ CFLAGS  = -I.
+ main: main.o
+ 	$(CC) -o $@ $^
+ 
+-main.o: main.c
++main.o: main.c config.h
+ 	$(CC) $(CFLAGS) -c $< -o $@
+ 
+ .PHONY: check clean
