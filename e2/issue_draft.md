@@ -332,9 +332,121 @@ B10 已提到 7 项 required 并补上 `output` 的属性声明。**请确认**�
 
 ---
 
+# A 组 Issue #2 的第二轮回复正文
+
+> **发到**：[ana12-21/Devops_G10#2](https://github.com/ana12-21/Devops_G10/issues/2)（作为 Issue 评论）
+> **针对**：A 组 commit `fec3fbe`（2026-09-24）的逐条回应
+
+```markdown
+## B10 对贵组 fec3fbe 回应的确认与后续
+
+感谢逐条处理。B10 已核对全部 7 个议题的改动，其中 **5 条已对齐**（议题 3、4、6、7，以及议题 1 的 schema_version 部分）。
+
+以下 6 点仍需贵组确认或处理。
+
+### 1. ⚠️ `execution` 应进 `required`，不能是可选
+
+贵组 `task.schema.json` 现为：
+
+    "required": ["schema_version", "job_id", "job_type", "status", "trace_id", "input", "created_at"]
+
+`execution` 只出现在 `properties` 里，未进 `required`；贵组的失败样例也因此缺 `execution`。
+
+但课程对 E2 的原文是：
+
+> 公共字段（**必须包含 execution**）：schema_version、job_id、trace_id、job_type、status、execution、input、output、error
+
+「必须包含」是硬要求。B10 建议：
+
+- `required` 取**并集 8 项**：schema_version、job_id、trace_id、job_type、status、execution、input、created_at
+- 贵组的失败样例补齐 `execution`
+
+（B10 已按此改完本仓库 schema。）
+
+### 2. `dockerfile_job.req.json` 里超时写了两处，且值不同
+
+    "input":      { ..., "deadline_sec": 1800, ... }
+    "execution":  { "timeout_seconds": 600, ... }
+
+同一个超时两处表达，`1800` 与 `600` 不一致，消费者无法判定以谁为准。
+
+**请贵组删除 `input.deadline_sec`**，超时只由 `execution.timeout_seconds` 表达。
+
+另外贵组同批次内也自相矛盾：`dockerfile_job.res.json` 的 `execution.timeout_seconds` 为 `300`，
+而 `dockerfile_job_err.res.json` 的 `detail.deadline_sec` 为 `600`。请一并统一。
+
+### 3. `execution.resources.cpu` 类型
+
+贵组为整数 `2`，B10 为字符串 `"2"`。**建议统一为 `string`** ——
+整数表达不了 `"2000m"` 这类毫核值与小数核数。
+
+### 4. 修复器自身崩溃：错误码无处可依
+
+贵组 `error_codes.md` 中：
+
+- `ANALYSIS_5001`（分析器内部异常）的服务列为 `BuildChecker / EChecker`，**不含 MDFixer**
+- `ENV_3001`（可运行镜像拉取失败）的服务列**含 MDFixer**，但语义是镜像拉取失败，不是「修复器内部异常」
+
+MDFixer 自身崩溃目前无码可用。**请贵组二选一**：
+
+- **(a)** 在 `ANALYSIS_5001` 的服务列加入 `MDFixer`（语义放宽为「分析器/修复器内部异常」）
+- **(b)** 新增 `ANALYSIS_5002`：修复器内部异常（`MDFixer`）
+
+B10 倾向 **(b)** —— 分析器与修复器是两类服务，合并语义会让排查时无法区分。
+
+### 5. REPAIR「候选全败」与「超时」是两种情形，不应混写
+
+贵组原有 `repair_job_err.res.json` 把「候选 patch 全部失败」写成超时
+（`EXEC_4002` + "Repair timed out"），与贵组自家 `error_codes.md` 矛盾：
+
+- `EXEC_4003` = 候选 patch 全部失败，REPAIR 拒绝
+- `EXEC_4002` = 任务执行超时
+
+**请拆成两份样例**：候选全败用 `EXEC_4003` + `status = FAILED`；超时用 `EXEC_4002` + `status = TIMED_OUT`。
+
+### 6. 请求侧仍未携带 `trace_id`
+
+议题 1 的处理（统一请求必须携带正确的 `schema_version`）B10 已采纳，感谢。
+但**请求侧仍无 `trace_id`**。
+
+`trace_id` 的定义是「一次平台流程的串联 ID，跨 A/B 两组任务保持不变」。
+若发起方不把它传进来，服务端只能自行生成，「同一流程内多个任务共享一个 trace_id」就无法实现。
+**请在请求样例中补上 `trace_id`。**
+
+---
+
+## B10 侧已完成的改动
+
+按贵组回应，B10 已更新本仓库 `e2/task.schema.json`：
+
+| 项 | 现在 |
+|----|------|
+| `required` | 8 项（并集） |
+| `execution.required` | `["mode", "attempt"]` |
+| `trace_id` | `pattern: ^trace-[a-z0-9-]+$` |
+| `artifact.required` | 6 项（对齐贵组） |
+| 产物 `type` 枚举 | 10 项（对齐贵组） |
+| `execution.resources.cpu` | `string` |
+
+`python3 e2/validate.py` 最小检查 01–04 全部通过；另做 13 项变异测试确认新增约束全部生效。
+
+---
+
+**期望回复**：对第 1–6 条逐条给「同意 / 不同意 + 理由」。
+第 1 条（`execution` 进 `required`）关系到课程明确要求，希望优先确认。
+
+---
+
+*本评论由 B10 组长提出，只涉及 DRAFT 部分。B10 不会直接修改本仓库文件。*
+```
+
+---
+
 ## 使用说明
 
 1. 4 份组内 Issue 依次复制到本仓库 Issues，指派给对应成员。
 2. A 组联动正文复制到 A 组仓库 Issues，**标题严格用 `[B10] DRAFT 接口确认`**。
 3. 「已确认的 DRAFT 字段」一节已与 `e2/README.md` 第 2.1 节核对一致（2026-09-23）。两处内容若日后调整必须同步。
 4. 创建 Issue 后，把编号回填到 `CONTRIBUTORS.md` 的 Issue/PR 列。
+5. **A 组 Issue #2 的第二轮回复**（本文件上方「A 组 Issue #2 的第二轮回复正文」一节）作为 **Issue 评论**发出，不要新开 Issue。
+   发出前先看 [`resolutions.md`](resolutions.md) 第一节，那是 12 条裁决的完整依据。
