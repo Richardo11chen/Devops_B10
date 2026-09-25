@@ -8,7 +8,7 @@
 
 | 字段 | 填写要求 |
 |------|----------|
-| 编号 | `AI-001` 起递增 |
+| 编号 | `AI-001` 起递增。**分配规则（2026-09-25 组长裁决）**：编号 = 记录**在 `main` 上的追加顺序**，即合入顺序；不按人、不按日期、不预留空号。合并冲突时**后合入的一方顺延**（例：成员C 的 `AI-004` 顺延为 `AI-006`）。 |
 | 日期 | `YYYY-MM-DD` |
 | 使用人 | 组长 / 成员B / 成员C / 成员D |
 | 工具与模型 | 例：`Claude Code / claude-opus-5`；写清具体型号 |
@@ -32,6 +32,9 @@
 | AI-007 | 2026-09-25 | 成员D | Claude Code | 设计并实现 E3 MDFixer 固定输入与修复验证 | 按固定输入四件套 + reference.patch + 六步验证要求，规划 fixtures/evidence/work 目录与验证命令并执行 | 扁平目录布局；Target 风格 reference.patch；以第5步「不 clean 自动重建」作为 MD 已修的决定性证据；用 gcc -MMD -MP 实证 Implicit 风格；嵌套 git 仓库 + 外层 .gitignore 排除 | 采纳 | 三项决策（嵌套仓库+gitignore、README片段+Implicit实证、扁平布局）均采纳；执行中修正一处——无效候选需先 make clean 才能触发注入的失败命令 | `e3/fixtures/mdfixer/`、`e3/evidence/`、`.gitignore` @ `d3c86ca`、`aec91a4` |
 | AI-008 | 2026-09-25 | 成员B | WorkBuddy / DeepSeek-V4.1-Flash | 落地组长对 12 条议题的裁决，并在收紧后的 schema 上复核交付物 | 合并 `origin/main` 后按新 schema 复核三件套，找出文档中因裁决而**失效的论据**，并为新增约束补变异用例 | 判定「三件套无需改动」（契约字节级未变）；指出 README 6.2 第 6 条「`VERIFY_LOG` 改 `BUILD_LOG`」的**理由已被裁决推翻**（枚举已补 `VERIFY_LOG`），必须重写；把变异脚本由 34 项扩为 **44 项变异 + 3 项正向对照 + 2 项已知缺口**；新增发现「`check_request` 不校验 `trace_id` 的 pattern 与 `execution.attempt`」 | 修改后采纳 | 复跑结论采纳（`required=8` 下 `EXIT=0`、44/44 被拒、三件套 sha256 不变）。**一处不采纳**：AI 一度建议把 REPAIR 的 `verify.log` 类型改回 `VERIFY_LOG` 以对齐 A 组 —— 人工判断这会**造成 B 组内部前后不一致**（组长定稿的 DRAFT 样例 `dockerfile_job.res.json` 同样用 `BUILD_LOG`，且组长已裁定其「无需改动」），故保持 `BUILD_LOG`，另把「两组取值口径不统一」列为新待议项（README 6.7.2 第 2 条）。**一处人工改判**：AI 初版变异用例把 `trace-020-x` 列为「应被拒绝」，但它其实**符合** `^trace-[a-z0-9-]+$`，人工改为 `trace-020_x`（含下划线，确实非法） | `e2/README.md` 第 6 节（6.2 第 6 条、6.3、6.5、新增 6.7）、`e2/ADR.md` ADR-002、`.workbuddy/plans/_mutate_repair.py` @ `c434742`；核对对象 B10 `main` @ `70776a7` |
 | AI-009 | 2026-09-25 | 成员B | WorkBuddy / DeepSeek-V4.1-Flash | 同步成员C/D 合入后的最新 `main`，处理合并冲突并复核交付物 | 合并 `origin/main`（`aad384e`）时要求「冲突先别硬解，把现场发给我」，需要判定冲突性质、给出无损解法，并确认三件套在合并后仍通过校验 | 判定冲突仅 2 处且均为「多人并行追加同一张表」所致，不涉及契约与代码：`CONTRIBUTORS.md` 是同批行的双方改写、`e2/AI_USAGE.md` 是 `AI-006` **编号撞车**（成员C 已占用）；建议成员B 行取本分支新版（含 44 项变异）、C/D 行取 `main`、成员B 的 AI 记录顺延为 `AI-008`；另报出 `main` 侧 `e2/AI_USAGE.md` 表格内存在空行会把成员D 行切成表外段落 | 采纳 | 无损解法采纳并已提交（未单方重排他人记录编号、未改动组长文件）。**一处补正**：AI 另发现并修复 `e2/AI_USAGE.md` 表格中的空行断行；**一处存疑待裁**：AI 记录编号的分配顺序（按人 vs 按日期）本组此前无明文约定，本次按「`main` 已有编号顺延」处理，已在 PR 说明中提请组长确认 | `CONTRIBUTORS.md`、`e2/AI_USAGE.md`、`e2/README.md` 第 6 节 @ `13f10a4`；核对对象 B10 `main` @ `aad384e` |
+| AI-010 | 2026-09-25 | 组长 | Claude Code | 裁决成员B 的 12 条议题并收紧 `task.schema.json` | 逐条给出裁决、理由与执行方 | 建议：产物枚举采纳 A 组完整 10 项、`execution.attempt` 提为必填、`trace_id` 加 pattern、`artifact.required` 补 `media_type`/`sha256`；并删除 AI 自己在 `validate.py` 内置 REPAIR 样例中擅自添加的 `input.source_commit` | 采纳 | 12 条裁决全部落盘 `e2/resolutions.md`。第 11 条是**组长侧 AI 自身的错误**（凭空造字段），由成员B 指出后才删除，并加注防回归 | `e2/task.schema.json`、`e2/validate.py`、`e2/resolutions.md` @ `70776a7` |
+| AI-011 | 2026-09-25 | 组长 | Claude Code | 合并成员B/C/D 三个 PR 并解决冲突 | 三个 PR 依次合入，冲突不许硬解、要判定性质 | 判定三处冲突均为「多人并行追加同一张表」的排版冲突而非语义冲突：`CONTRIBUTORS.md` 相邻行改写、`e2/AI_USAGE.md` 编号撞车；建议保留双方内容、后合入方顺延编号 | 采纳 | 冲突解法采纳。成员D 的 PR 另经**人工**发现两处「引用了却不在提交里」（`Makefile.implicit` 漏提交、`work/mdfixer-demo/` 被 gitignore），退回补交而非代改；AI 初次审查时只看文件清单与日志，未验「README 引用的东西是否都在提交内」 | `CONTRIBUTORS.md`、`e2/AI_USAGE.md` @ `8797f08`、`3b4eede`、`a544843` |
+| AI-012 | 2026-09-25 | 组长 | Claude Code | 跨组契约比对与 `VERIFY_LOG` 追加裁决 | 逐字段比对两组 `task.schema.json`；核查成员B 提出的「同一份 `verify.log` 两组类型不同」 | 比对脚本报 8/9 项一致并定位 `resources.cpu` 差异；但对成员B 的类型漂移发现，AI **未察觉** | 修改后采纳 | **AI 的比对脚本有盲区**：只比 schema 定义、不比样例实际取值，故漏掉类型漂移。人工按成员B 的线索核查样例后确认属实，并补做「按 URI 比对两组 type」的跨组校验，两处 `verify.log` 统一为 `VERIFY_LOG`。教训：schema 合规 ≠ 契约一致 | `e2/task.schema.json`、`e2/contracts/{dockerfile_job,repair_job}.res.json`、`e2/resolutions.md` @ `6084e6e` |
 
 > 其余记录由各成员在完成自己任务时追加。**每人至少一条。**
 
