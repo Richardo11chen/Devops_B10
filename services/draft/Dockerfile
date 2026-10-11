@@ -20,7 +20,12 @@ ENV LC_ALL=C.UTF-8 \
 COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 COPY --from=docker-cli /usr/local/libexec/docker/cli-plugins/docker-buildx /usr/local/libexec/docker/cli-plugins/docker-buildx
 
-RUN apt-get update \
+# Debian apt 源：官方 deb.debian.org 在国内服务器上实测约 30 KB/s（镜像索引 9.6 MB 要 5 分钟以上，
+# 实测会久到像卡死），换阿里云镜像站后实测快约 500 倍。只改 URI，包内容与校验不变。
+# 要换回官方源：把下一行的 mirrors.aliyun.com 改回 deb.debian.org。
+# 基础镜像按 digest 固定，所以 /etc/apt/sources.list.d/debian.sources 的位置是稳定的。
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources \
+ && apt-get update \
  && apt-get install -y --no-install-recommends git \
  && rm -rf /var/lib/apt/lists/* \
  && dpkg-query -W -f='${Package}=${Version}\n' git > /opt/toolchain.lock \
