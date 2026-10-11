@@ -45,6 +45,7 @@ make all
 
 ### 约定
 
+- **Debian apt 源已改为阿里云镜像站**（`services/draft/Dockerfile` 里一行 `sed`，见该文件注释）。原因：官方 `deb.debian.org` 在课程服务器上实测约 **30 KB/s**，apt 索引 9.6 MB 要 5 分钟以上且实测表现为卡死（45 秒零输出、无活跃连接）；换 `mirrors.aliyun.com` 后 `apt-get install git` 从「无限等待」变为 **68 秒完成**。**只改 URI，包内容与哈希校验不变**。要换回官方源：把该行的 `mirrors.aliyun.com` 改回 `deb.debian.org`。
 - Python 基础镜像、Docker 客户端镜像与冒烟样例均通过镜像站按 **digest** 固定；更换时须核验 digest 与架构，并在提交说明中写明来源。服务镜像从 `docker:cli` 复制客户端，**不在容器里另装 Docker 引擎**；`docker_server` 记录的是宿主机引擎版本。
 - 新增 Python 依赖：写进 `requirements-dev.in`，执行 `make lock`，两个文件一起提交。
 - **密钥只放在 `.env`（权限 600），不提交、不进镜像、不打印到日志、不进 AI 使用记录。**
