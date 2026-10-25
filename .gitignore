@@ -9,3 +9,6 @@
 work/
 __pycache__/
 .pytest_cache/
+
+# 会话/项目数据（不进仓库）
+.workbuddy/

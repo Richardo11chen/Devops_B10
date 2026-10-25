@@ -24,15 +24,13 @@ def run_smoke(fixture, tag):
     start = time.time()
     code, log = run(["docker", "build", "--progress=plain", "-f", f"{fixture}/Dockerfile.broken", "-t", tag, fixture])
     lines = log.strip().splitlines()
-    make_error_line = next((line.strip() for line in lines if "make: not found" in line), None)
     return {
         "fixture": fixture,
         "docker_server": server.strip(),
         "build_exit_code": code,
         "build_seconds": round(time.time() - start, 1),
         "log_tail": lines[-8:],
-        "make_error_line": make_error_line,
-        "make_not_found": make_error_line is not None,
-        "passed": code != 0 and make_error_line is not None,
-        "note": "E4 只验证构建链路；E5 须重新保存完整原始构建日志及退出码",
+        "make_not_found": "make: not found" in log,
+        "passed": code != 0 and "make: not found" in log,
+        "note": "预期构建失败；这份失败日志就是 E5 复现 DRAFT 的起点",
     }
