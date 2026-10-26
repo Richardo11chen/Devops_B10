@@ -4,8 +4,8 @@
 #      /var/run/docker.sock 使用宿主机的 Docker（见 compose.yaml 与 README 第 5 节）
 #   3. 工具和 Python 包的实际版本在构建时写入 /opt/toolchain.lock
 #   4. 以普通用户 app 运行；访问 docker.sock 所需的用户组在运行时由 group_add 加入
-ARG BASE_IMAGE=m.daocloud.io/docker.io/library/python@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74
-ARG DOCKER_CLI_IMAGE=m.daocloud.io/docker.io/library/docker@sha256:9190b0613792e658a7783cf14b2d5ace5941bb68ede7276922ea36ee457d76ad
+ARG BASE_IMAGE=python:3.13-slim@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74
+ARG DOCKER_CLI_IMAGE=docker:28.5.1-cli@sha256:9190b0613792e658a7783cf14b2d5ace5941bb68ede7276922ea36ee457d76ad
 
 FROM ${DOCKER_CLI_IMAGE} AS docker-cli
 
