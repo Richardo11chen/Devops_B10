@@ -1,0 +1,63 @@
+[
+    {
+        "Id": "sha256:9ae451fb8b143c6c874eb22e640c2b40b1e8680a3028b37e0b5a7ecdcdd42cb9",
+        "RepoTags": [
+            "course1020-draft:local"
+        ],
+        "RepoDigests": [
+            "course1020-draft@sha256:9ae451fb8b143c6c874eb22e640c2b40b1e8680a3028b37e0b5a7ecdcdd42cb9"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-10-26T14:45:31.916879388+08:00",
+        "Config": {
+            "User": "app",
+            "Env": [
+                "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305",
+                "PYTHON_VERSION=3.13.14",
+                "PYTHON_SHA256=639e43243c620a308f968213df9e00f2f8f62332f7adbaa7a7eeb9783057c690",
+                "LC_ALL=C.UTF-8",
+                "TZ=UTC",
+                "PYTHONDONTWRITEBYTECODE=1",
+                "PYTHONUNBUFFERED=1"
+            ],
+            "Cmd": [
+                "python3",
+                "-m",
+                "draft",
+                "--help"
+            ],
+            "WorkingDir": "/app",
+            "ArgsEscaped": true
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 126878710,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:f4f8b983b714f130e2cff99176baa26352db6a55d3622e10ada40f2b4720a4eb",
+                "sha256:7ef9ddba6965cfcb2dcd5bf24e61737a0031c2d9be2b3377339111ab1ad3f0f2",
+                "sha256:ef9f8c7c1d6b6b918d5e93cba9a7de4c837e3047ca733296bd396d9a413ae64f",
+                "sha256:fde42b5dd2510411f5cd411982dd5fa72f546553ccba3e5260f33a3da21bbf8f",
+                "sha256:af5f7f2d2920a4866765c8a95825c23f73d0fee57330984ed29bcf1bd124ee5e",
+                "sha256:ad172a3c8e76b88e0fdd5f2120e557a4d07b731bb6071474602bf3f36a547232",
+                "sha256:88a7eff5c234a73115f4de3a6c75c2080d16227ab64e86290f3f9fe7aed4dc3b",
+                "sha256:c24c0caf5da501fc0282927fb025ef6234d269fa0c74a9424eb6ee3444f26204",
+                "sha256:8c98b0d5e6866da954257eedba3030cfab5823e72dea938d507c5e69e869446d",
+                "sha256:4ba8675b759a40d1eba77be013a4ccbe75211e214e18ed5d86893b64ce4a1e4c",
+                "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+                "sha256:3e9853408b35fef7e0d935a7e2b3d705152314759d990fd2fc6a06b6080dd717",
+                "sha256:18f1505df4b9676e7210d85e232b91f5ba1c85861774f04da753389f13fa55b6"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-10-26T06:45:32.022504335Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:9ae451fb8b143c6c874eb22e640c2b40b1e8680a3028b37e0b5a7ecdcdd42cb9",
+            "size": 856
+        }
+    }
+]
