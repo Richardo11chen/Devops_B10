@@ -39,4 +39,14 @@ class ProfileTests(unittest.TestCase):
         (self.p/'Makefile').write_text((self.p/'Makefile').read_text().replace('-O0','-include unknown.h'))
         with self.assertRaisesRegex(ValueError,'UNSUPPORTED_FLAGS'):scan(self.p)
 
+    def test_redundant_only_report_makes_no_change(self):
+        # 独立预期：报告里只有 REDUNDANT 时，补丁器不应有任何动作—
+        # 不生成 diff、不产生修改计划、源文件逐字节不变、RD 不被删除。
+        r=scan(self.p);r['findings']=[f for f in r['findings'] if f['type']=='REDUNDANT']
+        self.assertEqual([f['type'] for f in r['findings']],['REDUNDANT'])
+        before=(self.p/'Makefile').read_bytes();diff,plan=patch(self.p,r)
+        self.assertEqual(diff,'');self.assertEqual(plan,[])
+        self.assertEqual((self.p/'Makefile').read_bytes(),before)
+        self.assertIn('unused.h',(self.p/'Makefile').read_text())
+
 if __name__=='__main__':unittest.main()
