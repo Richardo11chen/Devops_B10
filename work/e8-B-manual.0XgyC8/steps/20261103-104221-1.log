@@ -1,0 +1,3 @@
+COMMIT_MATCH aafa20fe36e84779e510352320fba17d49d1708b
+MD [{'type': 'MISSING', 'target': 'main.o', 'dependency': 'config.h'}]
+STEP_EXIT_CODE=0
