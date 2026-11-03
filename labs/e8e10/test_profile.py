@@ -49,4 +49,41 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual((self.p/'Makefile').read_bytes(),before)
         self.assertIn('unused.h',(self.p/'Makefile').read_text())
 
+
+class StudentE8B(unittest.TestCase):
+    # 参考测试（来自 08_个人测试编写示例.md 2B）：补丁只改依赖行，TAB 配方逐字节保持。
+    def test_patch_keeps_recipe_bytes(self):
+        from lab import run
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            fixture(p)
+            before=(p/'Makefile').read_bytes()
+            diff,plan=patch(p,scan(p))
+            candidate=Path(directory)/'candidate.patch'
+            candidate.write_text(diff)
+            run(['git','apply',str(candidate.resolve())],p)
+            after=(p/'Makefile').read_bytes()
+            recipes=lambda data:[line for line in data.splitlines() if line.startswith(b'\t')]
+            self.assertEqual(recipes(before),recipes(after))
+            self.assertIn(b'main.o: main.c unused.h config.h',after)
+            self.assertEqual(plan[0]['style'],'direct')
+
+class StudentE8BExtra(unittest.TestCase):
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
+        self.p=Path(self.tmp.name)/'sample';fixture(self.p)
+
+    # 独立测试：报告引用未知目标（ghost.o）时必须明确拒绝 UNSUPPORTED_TARGET，
+    # 且源 Makefile 逐字节保持不变（拒绝动作不得触碰源文件）。
+    def test_unknown_target_rejected(self):
+        r=scan(self.p)
+        r['findings']=[{'type':'MISSING','target':'ghost.o','dependency':'config.h'}]
+        before=(self.p/'Makefile').read_bytes()
+        with self.assertRaisesRegex(ValueError,'UNSUPPORTED_TARGET'):
+            patch(self.p,r)
+        self.assertEqual((self.p/'Makefile').read_bytes(),before)
+        # 源工作区仍干净，拒绝未产生任何副作用。
+        from lab import run
+        self.assertEqual(run(['git','status','--porcelain'],self.p).strip(),'')
+
 if __name__=='__main__':unittest.main()
