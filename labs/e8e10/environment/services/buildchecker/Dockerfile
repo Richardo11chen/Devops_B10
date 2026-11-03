@@ -1,6 +1,6 @@
 # E5-E7 A组 BuildChecker。构建上下文为仓库根目录。
 # 使用 Docker 内置解析器，避免额外下载 docker/dockerfile 语法镜像。
-ARG BASE_IMAGE=m.daocloud.io/docker.io/library/python:3.13-slim@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74
+ARG BASE_IMAGE=python:3.13-slim@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74
 FROM ${BASE_IMAGE}
 
 ENV LC_ALL=C.UTF-8 \
