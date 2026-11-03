@@ -84,6 +84,13 @@ def patch(p,report):
         m=re.search(r'^'+re.escape(t)+r': (.*)$',changed,re.M)
         if not m: raise ValueError('UNSUPPORTED_TARGET')
         raw=m[1]; macros=re.findall(r'\$\((\w+)\)',raw)
+        # 已声明则跳过：同一缺失被重复列出，或对同一报告重复应用时，
+        # 不得重复追加同一依赖（幂等）。
+        _vars=dict(re.findall(r'^(\w+)\s*=\s*(.*)$',changed,re.M))
+        _expanded=raw
+        for _ in range(8):
+            _expanded=re.sub(r'\$\((\w+)\)',lambda x:_vars.get(x[1],x[0]),_expanded)
+        if d in _expanded.split(): continue
         if raw.strip()==('$(%s)'%macros[0] if macros else ''):
             name=macros[0]; vm=re.search(r'^'+name+r' = (.*)$',changed,re.M)
             if not vm: raise ValueError('UNSUPPORTED_MACRO')
