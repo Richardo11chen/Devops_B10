@@ -49,4 +49,17 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual((self.p/'Makefile').read_bytes(),before)
         self.assertIn('unused.h',(self.p/'Makefile').read_text())
 
+    def test_duplicate_missing_entries_added_once(self):
+        # 独立预期：同一条 MISSING 在报告里出现两次时，补丁只能追加一次；
+        # 且对同一个报告重复应用补丁不应产生 config.h config.h。
+        r=scan(self.p)
+        md=[f for f in r['findings'] if f['type']=='MISSING']
+        self.assertEqual([f['dependency'] for f in md],['config.h'])
+        r['findings']=md+md
+        before=(self.p/'Makefile').read_bytes();diff,plan=patch(self.p,r)
+        self.assertEqual((self.p/'Makefile').read_bytes(),before)
+        self.assertEqual(len(plan),1)
+        self.assertEqual(diff.count('config.h'),1)
+        self.assertEqual(diff.count('+main.o:'),1)
+
 if __name__=='__main__':unittest.main()
