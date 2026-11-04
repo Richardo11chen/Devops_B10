@@ -130,4 +130,39 @@ class Student241880214(unittest.TestCase):
             run(['git','apply',str(candidate.resolve())],p)
             self.assertFalse(any(f['type']=='MISSING' for f in scan(p)['findings']))
 
+
+class Student241880171(unittest.TestCase):
+    def test_two_missing_for_same_target(self):
+        """独立预期：同一个 target 有两条 MISSING（config.h 和 extra.h）时，
+        补丁计划有两项，目标行两个依赖都加上，顺序稳定为 config.h 再 extra.h。"""
+        from lab import run
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            fixture(p)
+            # main.c 同时包含 config.h 和 extra.h，但 Makefile 都没有声明
+            (p/'main.c').write_text(
+                '#include <stdio.h>\n'
+                '#include "config.h"\n'
+                '#include "extra.h"\n'
+                'int helper(void);\n'
+                'int main(void){printf("%d\n",VALUE+helper());return 0;}\n'
+            )
+            commit(p,'student: two undeclared headers')
+            report=scan(p)
+            missing=[f for f in report['findings'] if f['type']=='MISSING']
+            self.assertEqual([f['dependency'] for f in missing],['config.h','extra.h'])
+            before=(p/'Makefile').read_bytes()
+            diff,plan=patch(p,report)
+            self.assertEqual((p/'Makefile').read_bytes(),before)
+            self.assertEqual(len(plan),2)
+            self.assertEqual(plan,[
+                {'target':'main.o','dependency':'config.h','style':'direct'},
+                {'target':'main.o','dependency':'extra.h','style':'direct'},
+            ])
+            self.assertIn('+main.o: main.c unused.h config.h extra.h',diff)
+            candidate=Path(directory)/'candidate.patch'
+            candidate.write_text(diff)
+            run(['git','apply',str(candidate.resolve())],p)
+            self.assertFalse(any(f['type']=='MISSING' for f in scan(p)['findings']))
+
 if __name__=='__main__':unittest.main()
