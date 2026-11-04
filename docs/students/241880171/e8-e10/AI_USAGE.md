@@ -1,6 +1,8 @@
-# AI 使用记录
+# AI 使用记录（E8-E10 补自主用例）
 
-- 是否调用模型：调用过（对话式助手用于读手册、定位报错、生成报告与 ADR 草稿）。
-- 人工修改与核对：报告中的 SHA、镜像 ID、OUT 路径、steps 日志计数、测试计数均来自本人服务器实际运行输出；测试类 StudentE8B、StudentE9B、StudentE10B 按 08_个人测试编写示例.md 粘贴并逐项核对；labs/e8e10/lab.py 未修改。
-- 验证方式：python3 -m unittest discover -s labs/e8e10 -p test_profile.py -v，Ran 12 tests OK；E8/E9/E10 各 OUT 下 steps/ 日志全部 STEP_EXIT_CODE=0。
-- 未由模型生成的内容：所有实验命令的实际执行结果、validation.json、results.csv、gate.json、findings.json 均为容器内真实产出。
+## 补自主测试用例（2026-11-04）
+
+- 使用模型：Claude Opus 4.8（通过 Claude Code）
+- 使用范围：选择测试方向（Option 2：同一 target 两条 MISSING）、分析 patch() 函数行为以确定预期输出、编写  测试代码
+- 人工修改：确认测试预期（plan 顺序为 config.h 再 extra.h，按字母序）、验证 14 项测试全部通过、编写本次 AI_USAGE.md 记录
+- 测试设计思路由人工选定，代码逻辑由 AI 辅助编写，最终在 Docker 容器内验证通过
