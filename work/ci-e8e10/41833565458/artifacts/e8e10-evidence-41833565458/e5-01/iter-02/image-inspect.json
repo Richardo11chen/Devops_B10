@@ -1,0 +1,50 @@
+[
+    {
+        "Id": "sha256:2c62ab450f46e729f6899b5e80bff1f224966e1e03d3ebe79309634cb46ffb3c",
+        "RepoTags": [
+            "b10-e5-241880171:iter02"
+        ],
+        "RepoDigests": [
+            "b10-e5-241880171@sha256:2c62ab450f46e729f6899b5e80bff1f224966e1e03d3ebe79309634cb46ffb3c"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-10-26T17:56:09.925759262+08:00",
+        "Config": {
+            "Env": [
+                "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305",
+                "PYTHON_VERSION=3.13.16",
+                "PYTHON_SHA256=f4b1bfb3c79b5bb11b8d228a12504163b4c0dab4d679828d8f5f26b6cb6ab35d"
+            ],
+            "Cmd": [
+                "./hello"
+            ],
+            "WorkingDir": "/work",
+            "ArgsEscaped": true
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 149200787,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:15f1c8eb1ab18eae260c7fb6296434cbe1ff0e1e30fd814ae92a80dd54005e62",
+                "sha256:285510654d1d6a26507ed6576cae8fa995ba16469050787032499e9a34cbe9f5",
+                "sha256:acbf34fa608c522642659b109edfd70959b7c26593ea51141f3d339cc1875cfd",
+                "sha256:d175833b7147479e4e08f4f5d9dd2055b5ee746dc2f73520462468538d168bf6",
+                "sha256:c25979ea72718df3ea3f1e3ab7e310daa26367598d9dbd392cc5ea39a68c7e31",
+                "sha256:ad60a124b881bae6d4a26498c3150e1784a09c27222af7a718f8aee3164aab4d",
+                "sha256:021a85908ab1fd9890c0074aeb5d3e573269383669460de674fc32b2632b07a6",
+                "sha256:3ac672a039d6a0d0894805a4caaf955053dfa7082a89a191b9739b27db5e5edc"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-10-26T09:56:19.137155435Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:2c62ab450f46e729f6899b5e80bff1f224966e1e03d3ebe79309634cb46ffb3c",
+            "size": 856
+        }
+    }
+]

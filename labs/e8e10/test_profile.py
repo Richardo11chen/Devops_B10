@@ -112,4 +112,22 @@ class StudentE10B(unittest.TestCase):
             self.assertTrue(result['rollback'])
             self.assertTrue(result['source_unchanged'])
             self.assertEqual((p/'Makefile').read_bytes(),before)
+class Student241880214(unittest.TestCase):
+    def test_macro_plus_direct_dependency_is_mixed(self):
+        from lab import run
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            fixture(p,'macro')
+            makefile=p/'Makefile'
+            makefile.write_text(makefile.read_text().replace('main.o: $(DEPS)','main.o: $(DEPS) extra.h'))
+            commit(p,'student: macro plus direct dependency')
+            diff,plan=patch(p,scan(p))
+            self.assertEqual(plan,[{'target':'main.o','dependency':'config.h','style':'mixed'}])
+            self.assertIn('+main.o: $(DEPS) extra.h config.h',diff)
+            self.assertIn('DEPS = main.c unused.h\n',makefile.read_text())
+            candidate=Path(directory)/'candidate.patch'
+            candidate.write_text(diff)
+            run(['git','apply',str(candidate.resolve())],p)
+            self.assertFalse(any(f['type']=='MISSING' for f in scan(p)['findings']))
+
 if __name__=='__main__':unittest.main()
