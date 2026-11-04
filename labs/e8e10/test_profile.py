@@ -61,7 +61,6 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(len(plan),1)
         self.assertEqual(diff.count('config.h'),1)
         self.assertEqual(diff.count('+main.o:'),1)
-
 class StudentE8B(unittest.TestCase):
     def test_patch_keeps_recipe_bytes(self):
         from lab import run
@@ -78,8 +77,6 @@ class StudentE8B(unittest.TestCase):
             self.assertEqual(recipes(before),recipes(after))
             self.assertIn(b'main.o: main.c unused.h config.h',after)
             self.assertEqual(plan[0]['style'],'direct')
-
-
 class StudentE9B(unittest.TestCase):
     def test_macro_style_patch_updates_definition(self):
         from lab import run
@@ -95,8 +92,6 @@ class StudentE9B(unittest.TestCase):
             self.assertIn('main.o: $(DEPS)',text)
             self.assertEqual(plan[0]['style'],'macro')
             self.assertFalse(any(x['type']=='MISSING' for x in scan(p)['findings']))
-
-
 class StudentE10B(unittest.TestCase):
     def test_build_failure_keeps_original_makefile(self):
         from lab import validate
@@ -117,5 +112,22 @@ class StudentE10B(unittest.TestCase):
             self.assertTrue(result['rollback'])
             self.assertTrue(result['source_unchanged'])
             self.assertEqual((p/'Makefile').read_bytes(),before)
+class Student241880214(unittest.TestCase):
+    def test_macro_plus_direct_dependency_is_mixed(self):
+        from lab import run
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            fixture(p,'macro')
+            makefile=p/'Makefile'
+            makefile.write_text(makefile.read_text().replace('main.o: $(DEPS)','main.o: $(DEPS) extra.h'))
+            commit(p,'student: macro plus direct dependency')
+            diff,plan=patch(p,scan(p))
+            self.assertEqual(plan,[{'target':'main.o','dependency':'config.h','style':'mixed'}])
+            self.assertIn('+main.o: $(DEPS) extra.h config.h',diff)
+            self.assertIn('DEPS = main.c unused.h\n',makefile.read_text())
+            candidate=Path(directory)/'candidate.patch'
+            candidate.write_text(diff)
+            run(['git','apply',str(candidate.resolve())],p)
+            self.assertFalse(any(f['type']=='MISSING' for f in scan(p)['findings']))
 
 if __name__=='__main__':unittest.main()

@@ -14,4 +14,4 @@ B：共享变量怎样处理、失败怎样保证原目录不变。
 
 代价与覆盖范围：只支持显式 Make 依赖、`-O0`/`-O1`/`-O0 -DMODE=1` 和单阶段项目；不支持隐式规则、模式规则和复杂 Make 语法。macro 修改变量可能扩大跨目标影响。扩展方向为声明图/DIS、`.d` 文件、LLM 路径和 BuildChecker 全量重检。
 
-验证命令与实际证据：E8 `work/e8-B-manual.LJ7yTX`（6/6 exit 0，`candidate.patch`、`expected-failure.json=STALE_REPORT`）；E9 `work/e9-B-manual.XPBRCO`（4/4 exit 0，三份 patch/plan、`apply-demo/`）；E10 `work/e10-B-manual.th8XOI`（7/7 exit 0，`reject-test`/`accept`/`reject-patch`，`results.csv` 三行 True，`gate.json` rows=3，BuildChecker 无 MISSING）；单元测试 `work/unit-tests-20261104-204133.log`（`Ran 12 tests ... OK`）。
+验证命令与实际证据：E8 `work/e8-B-manual.LJ7yTX`（6/6 exit 0，`candidate.patch`、`expected-failure.json=STALE_REPORT`）；E9 `work/e9-B-manual.XPBRCO`（4/4 exit 0，三份 patch/plan、`apply-demo/`）；E10 `work/e10-B-manual.th8XOI`（7/7 exit 0，`reject-test`/`accept`/`reject-patch`，`results.csv` 三行 True，`gate.json` rows=3，BuildChecker 无 MISSING）；单元测试 `work/unit-tests-20261104-205504.log`（`Ran 13 tests ... OK`）。测试贡献：main 已含课程示例的三个 Student 测试；本人只新增 `Student241880214.test_macro_plus_direct_dependency_is_mixed`（macro + 目标行直接依赖 → style=mixed），不重复示例。
