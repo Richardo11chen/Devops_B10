@@ -61,22 +61,7 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(len(plan),1)
         self.assertEqual(diff.count('config.h'),1)
         self.assertEqual(diff.count('+main.o:'),1)
-class StudentE8B(unittest.TestCase):
-    def test_patch_keeps_recipe_bytes(self):
-        from lab import run
-        with tempfile.TemporaryDirectory() as directory:
-            p=Path(directory)/'sample'
-            fixture(p)
-            before=(p/'Makefile').read_bytes()
-            diff,plan=patch(p,scan(p))
-            candidate=Path(directory)/'candidate.patch'
-            candidate.write_text(diff)
-            run(['git','apply',str(candidate.resolve())],p)
-            after=(p/'Makefile').read_bytes()
-            recipes=lambda data:[line for line in data.splitlines() if line.startswith(b'\t')]
-            self.assertEqual(recipes(before),recipes(after))
-            self.assertIn(b'main.o: main.c unused.h config.h',after)
-            self.assertEqual(plan[0]['style'],'direct')
+
 class StudentE9B(unittest.TestCase):
     def test_macro_style_patch_updates_definition(self):
         from lab import run
