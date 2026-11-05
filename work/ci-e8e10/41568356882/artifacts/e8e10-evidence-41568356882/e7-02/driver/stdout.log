@@ -1,0 +1,67 @@
+[unit-tests] Running service tests...
+[success] Running real workflow; build logs are saved...
+[success] PASS; workflow exit=0
+[wrong-output] Running real workflow; build logs are saved...
+[wrong-output] PASS; workflow exit=1
+[invalid-candidate] Running real workflow; build logs are saved...
+[invalid-candidate] PASS; workflow exit=1
+[build-failed] Running real workflow; build logs are saved...
+[build-failed] PASS; workflow exit=1
+[runtime-timeout] Running real workflow; build logs are saved...
+[runtime-timeout] PASS; workflow exit=1
+{
+  "passed": true,
+  "image": "course1020-draft:local",
+  "cases": [
+    {
+      "case": "unit-tests",
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "case": "success",
+      "passed": true,
+      "exit_code": 0,
+      "workflow_status": "SUCCEEDED",
+      "trace_id": "e6-b-817bbd52fa8c4f1b93d313d4f14364d2"
+    },
+    {
+      "case": "wrong-output",
+      "passed": true,
+      "exit_code": 1,
+      "workflow_status": "FAILED",
+      "trace_id": "e6-b-a44b33870fbd43a5928f6e6ebb1baa98"
+    },
+    {
+      "case": "invalid-candidate",
+      "passed": true,
+      "exit_code": 1,
+      "workflow_status": "FAILED",
+      "trace_id": ""
+    },
+    {
+      "case": "build-failed",
+      "passed": true,
+      "exit_code": 1,
+      "workflow_status": "FAILED",
+      "trace_id": "e6-b-3e1fc8933c054e6e9ef8d46ce1f88b0f"
+    },
+    {
+      "case": "runtime-timeout",
+      "passed": true,
+      "exit_code": 1,
+      "workflow_status": "TIMED_OUT",
+      "trace_id": "e6-b-83d3fc0254564082b4babadbb7e2930c"
+    }
+  ],
+  "intentional_failure": false,
+  "selected_cases": [
+    "success",
+    "wrong-output",
+    "invalid-candidate",
+    "build-failed",
+    "runtime-timeout"
+  ],
+  "build_timeout_seconds": 3600,
+  "scope": "Recorded candidate replay for selected real workflow cases; not model generation or a three-project benchmark"
+}

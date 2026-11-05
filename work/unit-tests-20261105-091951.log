@@ -1,0 +1,23 @@
+test_duplicate_missing_entries_added_once (test_profile.ProfileTests.test_duplicate_missing_entries_added_once) ... ok
+test_include_added_invalidates_cache (test_profile.ProfileTests.test_include_added_invalidates_cache) ... ok
+test_independent_known_edges (test_profile.ProfileTests.test_independent_known_edges) ... ok
+test_old_report_rejected (test_profile.ProfileTests.test_old_report_rejected) ... ok
+test_patch_preserves_redundant_dependency (test_profile.ProfileTests.test_patch_preserves_redundant_dependency) ... ok
+test_redundant_only_report_makes_no_change (test_profile.ProfileTests.test_redundant_only_report_makes_no_change) ... ok
+test_unchanged_reuses_both_targets (test_profile.ProfileTests.test_unchanged_reuses_both_targets) ... ok
+test_unsafe_dependency_rejected (test_profile.ProfileTests.test_unsafe_dependency_rejected) ... ok
+test_unsupported_configuration_rejected (test_profile.ProfileTests.test_unsupported_configuration_rejected) ... ok
+test_two_missing_for_same_target (test_profile.Student241880171.test_two_missing_for_same_target)
+独立预期：同一个 target 有两条 MISSING（config.h 和 extra.h）时， ... ok
+test_macro_plus_direct_dependency_is_mixed (test_profile.Student241880214.test_macro_plus_direct_dependency_is_mixed) ... ok
+test_build_failure_keeps_original_makefile (test_profile.StudentE10B.test_build_failure_keeps_original_makefile) ... ok
+test_buildable_but_still_missing_rejected (test_profile.StudentE10BExtra.test_buildable_but_still_missing_rejected) ... ok
+test_patch_keeps_recipe_bytes (test_profile.StudentE8B.test_patch_keeps_recipe_bytes) ... ok
+test_unknown_target_rejected (test_profile.StudentE8BExtra.test_unknown_target_rejected) ... ok
+test_macro_style_patch_updates_definition (test_profile.StudentE9B.test_macro_style_patch_updates_definition) ... ok
+test_macro_patch_touches_only_deps_definition (test_profile.StudentE9BExtra.test_macro_patch_touches_only_deps_definition) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 1.536s
+
+OK
