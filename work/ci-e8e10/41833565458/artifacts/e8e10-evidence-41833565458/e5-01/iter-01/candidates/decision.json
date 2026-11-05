@@ -1,0 +1,33 @@
+{
+  "strategy": "error-driven",
+  "selection_rule": "R1_PASS__R2_MAJORITY_IDENTICAL__CHOSEN",
+  "selected_candidate": 1,
+  "matching_candidates": [
+    1,
+    2,
+    3
+  ],
+  "comparison_profile": "去首尾空白并折叠反斜杠续行；保留指令顺序与候选原始文件",
+  "raw_text_identical": true,
+  "r1_history_check": "三个候选都与失败的 iter-01 Dockerfile 不同（新增了依赖安装 RUN），本任务此前未构建过其他候选，R1 不排除任何一个。",
+  "r2_result": "三个候选逐字节相同，R2「多数一致」直接成立；按规则取第一个，即候选 1。",
+  "r3_result": "R2 已决定，无需触发。",
+  "r4_result": "R2 已决定，无需触发。",
+  "course_adaptation": "论文 R2/R3 的判定细节在本实验中只做教学近似；本次是 R2 真正起作用的案例。",
+  "model_acquisition": "用户手工把提示粘贴到 DeepSeek 网页版，三次独立新对话各取一版，三次回复逐字节相同；原文保存于 work/candidate/model-response.txt，具体模型版本未记录。",
+  "candidate_sha256": {
+    "1": "f4c86d4ee120d8a9114b1454d3eb23b5014eb326cc5b524cb291bc3f67e4eccd",
+    "2": "f4c86d4ee120d8a9114b1454d3eb23b5014eb326cc5b524cb291bc3f67e4eccd",
+    "3": "f4c86d4ee120d8a9114b1454d3eb23b5014eb326cc5b524cb291bc3f67e4eccd"
+  },
+  "selected_sha256": "f4c86d4ee120d8a9114b1454d3eb23b5014eb326cc5b524cb291bc3f67e4eccd",
+  "selected_equals_candidate": 1,
+  "validation_status": "PENDING_ITER_02_BUILD",
+  "build_result": null,
+  "program_verification_result": null,
+  "note": "三版相同是该模型在完全相同输入下的稳定输出，不是复制粘贴；已按 R2 取候选 1。候选未做任何人工修改。",
+  "cross_reference": {
+    "note": "本次候选的 sha256 与课程样例 e5-b-XsZXMk/iter-01/candidates/decision.json 中记录的 candidate-3 哈希逐字节相同。该样例不在学生下发材料内（学生只有 labs/ 与 docs/），成员无法接触，因此判定为同模型、同提示下的稳定复现，而非复制。保留此说明供验收时核对。",
+    "course_sample_candidate3_sha256": "f4c86d4ee120d8a9114b1454d3eb23b5014eb326cc5b524cb291bc3f67e4eccd"
+  }
+}

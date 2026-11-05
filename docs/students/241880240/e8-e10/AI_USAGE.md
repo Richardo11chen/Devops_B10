@@ -34,3 +34,9 @@ AI 编程助手（WorkBuddy，底层模型 DeepSeek-V4.1-Flash），2026-11-03�
 
 边界说明：
 `lab.py` 的算法逻辑中，AI 只提议了 `patch()` 内一段去重守卫（6 行），是否采纳与最终写法经人工确认；其余实现未改。所有结论以实际运行日志为准。
+
+E10 阶段的 AI 使用：
+- 输入上下文与问题：提供 `validate()` 源码与 E10 手册，确认「三次验证共用同一候选、只有预期不同」这一设计是否成立，以及头文件变化测试为什么必要。
+- 模型建议：指出 `validate()` 在 sandbox 内改 `config.h` 后重跑 `make`，若依赖关系没补上则 `main.o` 不会重编译、输出仍是旧值——因此 `header_change` 是区分「构建通过」与「依赖已修复」的关键 checks。
+- 采纳：保留该解释并写入 ADR。未改动 `validate()` 任何实现。
+- 实际验证：E10 七步 `STEP_EXIT_CODE=0`；源 `config.h` 为 1、sandbox 为 2；`results.csv` 三行全 True。

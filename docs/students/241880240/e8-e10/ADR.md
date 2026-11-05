@@ -22,3 +22,11 @@ E9 追加的决策：补丁生成的幂等性。
 - E9 四步 `STEP_EXIT_CODE=0`，三个 `STYLE_PASS`（`work/e9-B-manual.HaZcxJ/steps/`）
 - 修复前后三份 patch 逐字节一致：`diff work/e9-B-manual.AmkL0w/{direct,macro,mixed}.patch work/e9-B-manual.HaZcxJ/...` 无输出
 - 变异验证：删除幂等守卫后 `test_duplicate_missing_entries_added_once` 失败（`2 != 1`）
+
+E10 追加的判定设计：
+- 背景：补丁「能应用」不等于「正确」。需要把生成、接受、回滚分开，并证明失败不会污染已接受的版本。
+- 选择：`validate()` 五道 checks（应用、构建、测试输出、头文件变化、无残留 MD）全通过才写回；任一失败即 `rollback=True` 且源字节不变。三次验证共用同一候选，只有预期不同。
+- 替代方案：先写回再验证、失败再回滚。否决——回滚本身可能失败，且会污染源目录，无法证明 `source_unchanged`。
+- 头文件变化测试的必要性：首次构建成功不能说明 MD 已修好——头文件存在时编译器总能读到。必须改 `config.h`（VALUE 1→2）后仍能自动重编译并输出新值，才证明依赖关系真的补上了。本次源 `config.h` 保持 1、sandbox 内为 2，`incremental.log` 显示 `main.o` 重编译并重新链接。
+- 代价：每次验证复制一次项目并重建 Git，样例规模可忽略；真实项目需要硬链接或 overlay。
+- 验证：`results.csv` 三行全 True，`gate.json` `passed=true, rows=3`，真实 BuildChecker 重检无 MISSING，`cmp source-after-accept.Makefile project/Makefile` 退出 0。
