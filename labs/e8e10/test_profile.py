@@ -201,4 +201,49 @@ class StudentE8BExtra(unittest.TestCase):
         from lab import run
         self.assertEqual(run(['git','status','--porcelain'],self.p).strip(),'')
 
+
+class StudentE9BExtra(unittest.TestCase):
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
+        self.p=Path(self.tmp.name)/'sample';fixture(self.p,'macro')
+
+    # 独立测试（E9-B，共享变量方向）：macro 风格补丁必须只修改 DEPS 定义行，
+    # main.o 的目标行（main.o: $(DEPS)）在 diff 中不得出现增删——
+    # 目标引用保持原样才能保证未分析的共享变量语义不被悄悄扩大。
+    def test_macro_patch_touches_only_deps_definition(self):
+        r=scan(self.p);diff,plan=patch(self.p,r)
+        self.assertEqual(plan[0]['style'],'macro')
+        self.assertIn('-DEPS = main.c unused.h',diff)
+        self.assertIn('+DEPS = main.c unused.h config.h',diff)
+        self.assertNotIn('-main.o:',diff)
+        self.assertNotIn('+main.o:',diff)
+        # 补丁未写回源文件
+        self.assertNotIn('config.h',(self.p/'Makefile').read_text())
+
+class StudentE10BExtra(unittest.TestCase):
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
+        self.p=Path(self.tmp.name)/'sample';fixture(self.p)
+
+    # 独立测试（E10-B，"能构建但仍存在MD"方向）：构造错误候选——
+    # 把依赖加成确实存在、可参与构建的 extra.h 而非 config.h。
+    # 预期：patch 可应用、构建通过、功能测试通过，但增量重检仍报 MISSING config.h
+    # （no_missing=False），因此 accepted=False 且源 Makefile 逐字节不变。
+    def test_buildable_but_still_missing_rejected(self):
+        from lab import validate
+        r=scan(self.p)
+        r['findings']=[{'type':'MISSING','target':'main.o','dependency':'extra.h'}]
+        diff,plan=patch(self.p,r)
+        candidate=self.p.parent/'wrong.patch'
+        candidate.write_text(diff)
+        before=(self.p/'Makefile').read_bytes()
+        result=validate(self.p,candidate,self.p.parent/'validation-wrong')
+        self.assertTrue(result['checks']['patch_applies'])
+        self.assertTrue(result['checks']['build'])
+        self.assertFalse(result['checks']['no_missing'])
+        self.assertFalse(result['accepted'])
+        self.assertTrue(result['rollback'])
+        self.assertTrue(result['source_unchanged'])
+        self.assertEqual((self.p/'Makefile').read_bytes(),before)
+
 if __name__=='__main__':unittest.main()

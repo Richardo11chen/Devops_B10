@@ -1,0 +1,14 @@
+{
+  "provider": "DeepSeek",
+  "model_version": "未记录",
+  "date": "2026-10-26",
+  "prompt_path": "work/e5-01/iter-01/prompt-error-driven.txt",
+  "raw_response_path": "work/candidate/model-response.txt",
+  "candidate_path": "work/candidate/Dockerfile",
+  "candidate_sha256": "f4c86d4ee120d8a9114b1454d3eb23b5014eb326cc5b524cb291bc3f67e4eccd",
+  "manual_changes": [],
+  "selection_reason": "三次独立对话的回复逐字节相同，R2「多数一致」成立，取候选 1；未对候选做任何人工修改。",
+  "is_recorded_replay": false,
+  "independent_replies": 3,
+  "replies_identical": true
+}
