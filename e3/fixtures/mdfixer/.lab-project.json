@@ -1,0 +1,11 @@
+{
+  "schema_version": "lab-project-1",
+  "targets": [{"object": "main.o", "source": "main.c"}],
+  "program": "main",
+  "build_target": "main",
+  "allowed_flags": ["-I."],
+  "header": "config.h",
+  "expected_output": "v1",
+  "header_edit": {"from": "#define MESSAGE \"v1\"", "to": "#define MESSAGE \"v2\""},
+  "header_output": "v2"
+}
