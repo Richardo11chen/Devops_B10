@@ -12,3 +12,5 @@ __pycache__/
 
 # 会话/项目数据（不进仓库）
 .workbuddy/
+
+data/
