@@ -180,4 +180,17 @@ class Student241880171(unittest.TestCase):
             self.assertFalse(any(f['type'] == 'MISSING' for f in lab.scan(p)['findings']))
 
 
+class Student241880214(unittest.TestCase):
+    def test_mixed_style_patch_appends_to_target_line(self):
+        import lab
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            lab.fixture(p,'mixed')
+            diff,edits=lab.patch(p,lab.scan(p))
+            self.assertEqual([e['style'] for e in edits],['mixed'])
+            self.assertIn('+main.o: main.c $(HEADERS) config.h',diff)
+            self.assertIn('HEADERS = unused.h', (p/'Makefile').read_text())
+            self.assertNotIn('HEADERS = unused.h config.h', (p/'Makefile').read_text())
+            self.assertEqual(diff.count('+main.o:'),1)
+
 if __name__=='__main__':unittest.main()
