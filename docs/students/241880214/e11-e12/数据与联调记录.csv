@@ -1,0 +1,5 @@
+实验,数据来源,仓库,base_commit,target_commit,job_id,trace_id,报告路径,补丁路径,结果
+E11-A,固定集成样例,/course/data/integration-sample/repo,c081713587ae9ee35480af63043bf099c6fc22c4,26bd5e5ac6b808fbb6ba805a3d195903da92f04b,job-c9d22d0707874db29661b28f73e9247c,trace-7aafa0b65bc249cfb7dfebe23436ff5f,work/e11-a-01/incremental-report.json,—,SUCCEEDED
+E11-B,固定集成样例,/course/data/integration-sample/repo,c081713587ae9ee35480af63043bf099c6fc22c4,26bd5e5ac6b808fbb6ba805a3d195903da92f04b,job-498df50c0eee4753841c8bc351cbdb29,trace-010da8e72dd6441bb07ca55a1042ae57,work/e11-b-01/draft-build/result.json,work/e11-b-01/candidate.patch,SUCCEEDED_ACCEPTED
+E12固定样例,固定集成样例,/course/data/integration-sample/repo,c081713587ae9ee35480af63043bf099c6fc22c4,26bd5e5ac6b808fbb6ba805a3d195903da92f04b,job-dda8490ca80a4a67b4a28e167756599f,trace-762e2fbe03924ce581ed42f58fb47f93,work/e12-01/recheck.json,work/e12-01/candidate.patch,SUCCEEDED_MISSING0
+E12真实项目,真实项目,/course/data/real-project,f6b826805ed07ad19c5e4960793170dad6f45d53,29d0cb7435994e7b6476d351b857f9bb14a2dffb,job-6b8e0ca2810944beb29d1d787e712ae8,trace-b91ac4246da54c0ca1b7cc1acbf83f66,work/e12-real-01/recheck.json,work/e12-real-01/candidate.patch,SUCCEEDED_5CHECKS

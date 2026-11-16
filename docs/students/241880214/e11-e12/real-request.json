@@ -1,0 +1,10 @@
+{
+  "mode": "e12",
+  "repo": "/course/data/real-project",
+  "base": "f6b826805ed07ad19c5e4960793170dad6f45d53",
+  "target": "29d0cb7435994e7b6476d351b857f9bb14a2dffb",
+  "candidate": "/course/data/real-candidate.Dockerfile",
+  "expected_output": "v1",
+  "build_timeout": 600,
+  "subdir": "e3/fixtures/mdfixer"
+}
