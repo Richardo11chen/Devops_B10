@@ -147,6 +147,39 @@ class Adaptation(unittest.TestCase):
         self.assertEqual(ctx.exception.code, 'STALE_REPORT')
 
 
+class Student241880171(unittest.TestCase):
+    def test_macro_patch_lands_on_definition_line(self):
+        """自主任务：macro 风格补丁落在 DEPS 定义行，main.o: $(DEPS) 一字不变。"""
+        import lab
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / 'sample'
+            lab.fixture(p, 'macro')
+            makefile = p / 'Makefile'
+            before = makefile.read_text()
+            target_before = [ln for ln in before.splitlines() if ln.startswith('main.o:')]
+            report = lab.scan(p)
+            diff, edits = lab.patch(p, report)
+            # 唯一 MISSING 是 config.h，风格为 macro
+            self.assertEqual(edits, [{'target': 'main.o', 'dependency': 'config.h', 'style': 'macro'}])
+            # 补丁落在 DEPS 定义行，而非目标行
+            self.assertIn('-DEPS = main.c unused.h', diff)
+            self.assertIn('+DEPS = main.c unused.h config.h', diff)
+            self.assertNotIn('-main.o:', diff)
+            self.assertNotIn('+main.o:', diff)
+            # 源文件未被修改
+            self.assertEqual(makefile.read_text(), before)
+            # 应用补丁后，目标行字节级一字不变
+            candidate = Path(d) / 'candidate.patch'
+            candidate.write_text(diff)
+            lab.run(['git', 'apply', str(candidate.resolve())], p)
+            after = makefile.read_text()
+            target_after = [ln for ln in after.splitlines() if ln.startswith('main.o:')]
+            self.assertEqual(target_before, target_after)
+            self.assertEqual(target_after, ['main.o: $(DEPS)'])
+            # 重检无 MISSING（RD unused.h 允许保留）
+            self.assertFalse(any(f['type'] == 'MISSING' for f in lab.scan(p)['findings']))
+
+
 class Student241880214(unittest.TestCase):
     def test_mixed_style_patch_appends_to_target_line(self):
         import lab
