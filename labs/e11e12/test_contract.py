@@ -193,4 +193,77 @@ class Student241880214(unittest.TestCase):
             self.assertNotIn('HEADERS = unused.h config.h', (p/'Makefile').read_text())
             self.assertEqual(diff.count('+main.o:'),1)
 
+class Student241880237(unittest.TestCase):
+    """自主任务：同一目标两条 MISSING 的计划顺序与单行合并。
+
+    项目里 main.c 故意把 #include "extra.h" 写在 #include "config.h" 之前，
+    gcc -MM 的原始输出顺序因此是 extra.h、config.h。
+    若实现只是照抄 gcc 顺序追加依赖，下面的顺序断言就会失败；
+    通过则说明计划顺序由依赖名稳定决定，而不取决于编译器输出顺序。
+    """
+
+    MAKEFILE = (
+        "CFLAGS = -I.\n"
+        "main: main.o\n"
+        "\tgcc -o main main.o\n"
+        "main.o: main.c\n"
+        "\tgcc $(CFLAGS) -c main.c -o main.o\n"
+        ".PHONY: clean\n"
+        "clean:\n"
+        "\trm -f main.o main\n"
+    )
+
+    def project(self, directory):
+        import lab
+        p = Path(directory) / 'proj'
+        p.mkdir()
+        (p / 'main.c').write_text('#include "extra.h"\n#include "config.h"\n#include <stdio.h>\n'
+                                  'int main(void){printf("%s\\n",MESSAGE);return 0;}\n')
+        (p / 'config.h').write_text('#define MESSAGE "v1"\n')
+        (p / 'extra.h').write_text('#define EXTRA 0\n')
+        (p / 'Makefile').write_text(self.MAKEFILE)
+        (p / '.lab-project.json').write_text(
+            '{"targets":[{"object":"main.o","source":"main.c"}],'
+            '"program":"main","build_target":"main","allowed_flags":["-I."],'
+            '"header":"config.h","expected_output":"v1",'
+            '"header_edit":{"from":"#define MESSAGE \\"v1\\"","to":"#define MESSAGE \\"v2\\""},'
+            '"header_output":"v2"}')
+        lab.run(['git', 'init', '-b', 'main'], p)
+        lab.run(['git', 'config', 'user.name', 'Student241880237'], p)
+        lab.run(['git', 'config', 'user.email', 'student@localhost'], p)
+        lab.run(['git', 'add', '-A'], p)
+        lab.run(['git', 'commit', '-m', 'C1'], p)
+        return p
+
+    def test_two_missing_for_same_target_are_ordered_and_merged(self):
+        import lab
+        with tempfile.TemporaryDirectory() as directory:
+            p = self.project(directory)
+            report = lab.scan(p)
+            # 独立预期：main.o 同时缺两个头文件，而不是一条
+            self.assertEqual(sorted((f['type'], f['target'], f['dependency']) for f in report['findings']),
+                             [('MISSING', 'main.o', 'config.h'), ('MISSING', 'main.o', 'extra.h')])
+            diff, plan = lab.patch(p, report)
+            # 1) 计划两项，目标相同、依赖各一条
+            self.assertEqual([(e['target'], e['dependency']) for e in plan],
+                             [('main.o', 'config.h'), ('main.o', 'extra.h')])
+            # 2) 顺序固定：config.h 先、extra.h 后（不随 gcc -MM 的 include 顺序）
+            self.assertEqual([e['dependency'] for e in plan], ['config.h', 'extra.h'])
+            # 3) 两条依赖合进同一行：diff 只有一行 -main.o: 和一行 +main.o:
+            self.assertEqual(diff.count('+main.o:'), 1)
+            self.assertEqual(diff.count('-main.o:'), 1)
+            self.assertIn('+main.o: main.c config.h extra.h', diff)
+            # 4) direct 风格，且 patch() 不写回源文件
+            self.assertEqual({e['style'] for e in plan}, {'direct'})
+            self.assertEqual((p / 'Makefile').read_text(), self.MAKEFILE)
+            # 5) 补丁可应用，落地后依赖顺序稳定且无重复
+            candidate = Path(directory) / 'candidate.patch'
+            candidate.write_text(diff)
+            lab.run(['git', 'apply', str(candidate.resolve())], p)
+            line = [ln for ln in (p / 'Makefile').read_text().splitlines() if ln.startswith('main.o:')]
+            self.assertEqual(line, ['main.o: main.c config.h extra.h'])
+            # 6) 重检不再有 MISSING
+            self.assertFalse(any(f['type'] == 'MISSING' for f in lab.scan(p)['findings']))
+
+
 if __name__=='__main__':unittest.main()
