@@ -1,3 +1,4 @@
+import json
 import copy
 import tempfile
 import unittest
@@ -192,6 +193,42 @@ class Student241880214(unittest.TestCase):
             self.assertIn('HEADERS = unused.h', (p/'Makefile').read_text())
             self.assertNotIn('HEADERS = unused.h config.h', (p/'Makefile').read_text())
             self.assertEqual(diff.count('+main.o:'),1)
+
+    def _fake_autobuild(self, target, candidate, draft_dir, expected, timeout=600):
+        draft_dir.mkdir(parents=True, exist_ok=True)
+        (draft_dir / 'result.json').write_text('{"status": "SUCCEEDED"}', encoding='utf-8')
+        return {'status': 'SUCCEEDED'}
+
+    def test_fixed_report_sha256_missing_is_backward_compatible(self):
+        req = json.loads((pipeline.ROOT / 'data/integration-sample/e11-b.json').read_text(encoding='utf-8'))
+        req.pop('fixed_report_sha256', None)
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / 'out'
+            with patch('draft.autobuild.auto_build', side_effect=self._fake_autobuild):
+                res = pipeline.execute(req, out)
+                self.assertEqual(res['status'], 'SUCCEEDED')
+                self.assertNotIn('error', res)
+
+    def test_fixed_report_sha256_mismatch_fails_with_artifact_hash_mismatch(self):
+        req = json.loads((pipeline.ROOT / 'data/integration-sample/e11-b.json').read_text(encoding='utf-8'))
+        bad_req = dict(req, fixed_report_sha256='0' * 64)
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / 'out'
+            with patch('draft.autobuild.auto_build', side_effect=self._fake_autobuild):
+                res = pipeline.execute(bad_req, out)
+                self.assertEqual(res['status'], 'FAILED')
+                self.assertEqual(res['error']['code'], 'ARTIFACT_HASH_MISMATCH')
+
+    def test_fixed_report_file_missing_fails_explicitly_not_keyerror(self):
+        req = json.loads((pipeline.ROOT / 'data/integration-sample/e11-b.json').read_text(encoding='utf-8'))
+        missing_req = dict(req, fixed_report='/nonexistent/fixed_report.json')
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / 'out'
+            with patch('draft.autobuild.auto_build', side_effect=self._fake_autobuild):
+                res = pipeline.execute(missing_req, out)
+                self.assertEqual(res['status'], 'FAILED')
+                self.assertNotEqual(res['error']['code'], 'KeyError')
+                self.assertIn('No such file or directory', res['error']['message'])
 
 class Student241880237(unittest.TestCase):
     """自主任务：同一目标两条 MISSING 的计划顺序与单行合并。
