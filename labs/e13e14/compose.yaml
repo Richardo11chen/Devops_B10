@@ -8,11 +8,6 @@ x-common: &common
   environment:
     PYTHONPATH: /course/labs/e8e10:/course/labs/e11e12/vendor:/app
     PYTHONDONTWRITEBYTECODE: "1"
-    # 容器以 root 运行而宿主检出目录属于另一用户时，git 会拒绝操作
-    # （detected dubious ownership）。CI runner 上必然出现，本机全 root 不出现。
-    GIT_CONFIG_COUNT: "1"
-    GIT_CONFIG_KEY_0: safe.directory
-    GIT_CONFIG_VALUE_0: "*"
   volumes:
     - ${E14_ROOT:?set E14_ROOT}:/course
   cpus: 1.0
@@ -32,6 +27,9 @@ services:
     environment:
       E14_ROLE: buildchecker
       PYTHONDONTWRITEBYTECODE: "1"
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: "*"
     command: ["python3", "labs/e13e14/service.py"]
     ports: ["127.0.0.1:18081:8080"]
     cap_add: ["SYS_PTRACE"]
@@ -41,6 +39,9 @@ services:
     environment:
       E14_ROLE: echecker
       PYTHONDONTWRITEBYTECODE: "1"
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: "*"
     command: ["python3", "labs/e13e14/service.py"]
     ports: ["127.0.0.1:18082:8080"]
 
@@ -49,6 +50,9 @@ services:
     environment:
       E14_ROLE: draft
       PYTHONDONTWRITEBYTECODE: "1"
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: "*"
     command: ["python3", "labs/e13e14/service.py"]
     ports: ["127.0.0.1:18083:8080"]
     volumes:
@@ -60,5 +64,8 @@ services:
     environment:
       E14_ROLE: mdfixer
       PYTHONDONTWRITEBYTECODE: "1"
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: "*"
     command: ["python3", "labs/e13e14/service.py"]
     ports: ["127.0.0.1:18084:8080"]
