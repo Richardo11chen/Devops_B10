@@ -68,6 +68,28 @@ class HandoffTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "another target commit"):
             make_handoff(self.result_path, "b" * 40)
 
+    def test_different_target_commit_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "another target commit"):
+            make_handoff(self.result_path, "f" * 40)
+
+    def test_changed_stage_artifact_is_rejected(self):
+        stage_path = self.root / "incremental-check.json"
+        data = bytearray(stage_path.read_bytes())
+        data[0] ^= 0x01
+        stage_path.write_bytes(data)
+        with self.assertRaisesRegex(ValueError, "hash or size mismatch"):
+            make_handoff(self.result_path, self.sha)
+
+    def test_artifact_uri_from_other_job_is_rejected(self):
+        result = json.loads(self.result_path.read_text())
+        uri = result["stages"][0]["artifact"]["uri"]
+        result["stages"][0]["artifact"]["uri"] = uri.replace(
+            "artifact://job-example/", "artifact://job-other/", 1
+        )
+        self.result_path.write_text(json.dumps(result) + "\n")
+        with self.assertRaisesRegex(ValueError, "another job"):
+            make_handoff(self.result_path, self.sha)
+
 
 if __name__ == "__main__":
     unittest.main()
