@@ -135,6 +135,12 @@ def execute(request, out, job_id=None):
         else:
             # E11-B still consumes a fixed MD input, separately from A's live output.
             fixed=Path(request['fixed_report'])
+            # E13：可选读取前校验，用于确认交接报告在传输过程中字节未变。
+            expected=request.get('fixed_report_sha256')
+            if expected:
+                actual=hashlib.sha256(fixed.read_bytes()).hexdigest()
+                if actual!=expected:
+                    raise Failure('ARTIFACT_HASH_MISMATCH','Fixed report bytes changed: '+actual)
             envelope=json.loads(fixed.read_text(encoding='utf-8'))
             check_envelope(envelope,target_sha,'fixed-md')
             current=envelope['data']
