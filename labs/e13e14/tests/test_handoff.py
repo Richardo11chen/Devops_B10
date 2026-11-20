@@ -68,9 +68,14 @@ class HandoffTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "another target commit"):
             make_handoff(self.result_path, "b" * 40)
 
-    def test_different_target_commit_is_rejected(self):
-        with self.assertRaisesRegex(ValueError, "another target commit"):
-            make_handoff(self.result_path, "f" * 40)
+    def test_multiple_incremental_check_stages_are_rejected(self):
+        # A 的结果目录混入多轮报告时，stages 里会出现不止一个 incremental-check，
+        # make_handoff 必须拒绝，而不是默默取第一个。
+        result = json.loads(self.result_path.read_text())
+        result["stages"].append(dict(result["stages"][0]))
+        self.result_path.write_text(json.dumps(result) + "\n")
+        with self.assertRaisesRegex(ValueError, "one incremental-check stage"):
+            make_handoff(self.result_path, self.sha)
 
     def test_changed_stage_artifact_is_rejected(self):
         stage_path = self.root / "incremental-check.json"
