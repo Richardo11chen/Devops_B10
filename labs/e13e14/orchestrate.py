@@ -45,7 +45,20 @@ def command(argv, cwd, log):
     return p.stdout.strip()
 
 
-def snapshot(repo, revision, target, logs):
+def profile(root):
+    """项目描述：有 .lab-project.json 时覆盖默认形状。"""
+    descriptor = Path(root) / '.lab-project.json'
+    if descriptor.is_file():
+        data = json.loads(descriptor.read_text(encoding='utf-8'))
+        data.setdefault('build_target', 'app')
+        data.setdefault('header', 'config.h')
+        return data
+    return {'targets': [{'object': 'main.o', 'source': 'main.c'},
+                        {'object': 'helper.o', 'source': 'helper.c'}],
+            'build_target': 'app', 'header': 'config.h'}
+
+
+def snapshot(repo, revision, target, logs, subdir=None):
     if not re.fullmatch(r'[0-9a-f]{40}', revision):
         raise ValueError('Use a full Git commit SHA')
     head = command(['git', 'rev-parse', '--verify', revision + '^{commit}'], repo,
@@ -53,9 +66,16 @@ def snapshot(repo, revision, target, logs):
     command(['git', 'clone', '--no-hardlinks', '--no-checkout', str(repo), str(target)], repo,
             logs / (target.name + '-clone.log'))
     command(['git', 'checkout', '--detach', head], target, logs / (target.name + '-checkout.log'))
-    if {p.name for p in target.glob('*.c')} != {'main.c', 'helper.c'} or not (target / 'config.h').is_file():
+    project = target
+    if subdir:
+        project = (target / subdir).resolve()
+        if not project.is_relative_to(target.resolve()) or not project.is_dir():
+            raise ValueError('subdir escapes snapshot or missing')
+    prof = profile(project)
+    missing = [i['source'] for i in prof['targets'] if not (project / i['source']).is_file()]
+    if missing or not (project / prof['header']).is_file():
         raise ValueError('Unsupported teaching project profile')
-    return head
+    return head, project
 
 
 def call(role, payload, evidence):
@@ -105,8 +125,9 @@ def execute(request, out):
         base = out / 'base-project'
         target = out / 'target-project'
         logs = out / 'logs'
-        base_sha = snapshot(repo, request['base'], base, logs)
-        target_sha = snapshot(repo, request['target'], target, logs)
+        subdir = request.get('subdir')
+        base_sha, base = snapshot(repo, request['base'], base, logs, subdir)
+        target_sha, target = snapshot(repo, request['target'], target, logs, subdir)
         result.update(base_commit=base_sha, target_commit=target_sha)
 
         drafted = call('draft', payload(target, out / 'draft-build',

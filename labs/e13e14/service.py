@@ -29,6 +29,19 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def profile(root):
+    """项目描述：缺省等价于双源 main.c/helper.c、构建目标 app。"""
+    descriptor = Path(root) / '.lab-project.json'
+    if descriptor.is_file():
+        data = json.loads(descriptor.read_text(encoding='utf-8'))
+        data.setdefault('build_target', 'app')
+        data.setdefault('header', 'config.h')
+        return data
+    return {'targets': [{'object': 'main.o', 'source': 'main.c'},
+                        {'object': 'helper.o', 'source': 'helper.c'}],
+            'build_target': 'app', 'header': 'config.h'}
+
+
 def save(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -47,7 +60,7 @@ def run(data):
             raise ValueError('DRAFT_' + result['status'] + ': ' + str(result.get('error')))
         return {'status': 'SUCCEEDED', 'result': result, 'artifact': str(out / 'result.json')}
     if ROLE == 'buildchecker':
-        result = full_check(project, out)
+        result = full_check(project, out, build_command='make ' + profile(project)['build_target'])
         if result['status'] != 'SUCCEEDED':
             raise ValueError('BUILDCHECKER_' + result['status'] + ': ' + str(result.get('error')))
         return {'status': 'SUCCEEDED', 'result': result, 'artifact': str(out / 'findings.json')}
@@ -57,15 +70,16 @@ def run(data):
         target_findings = local(data['target_findings'])
         old = scan(base)
         graph = json.loads(baseline_graph.read_text())
+        keep = [item['object'] for item in profile(project)['targets']]
         projected = {t: sorted({e['dependency'] for e in graph if e['target'] == t})
-                     for t in ('main.o', 'helper.o')}
+                     for t in keep}
         if old['actual'] != projected:
             raise ValueError('Baseline BuildChecker/GCC graph mismatch')
         old['actual'] = projected
         current = scan(project, old)
         reference = json.loads(target_findings.read_text())
         normalize = lambda fs: sorted((x['type'], x['target'], x['dependency']) for x in fs
-                                      if x['target'] in ('main.o', 'helper.o'))
+                                      if x['target'] in keep)
         if reference['status'] != 'SUCCEEDED' or normalize(current['findings']) != normalize(reference['findings']):
             raise ValueError('Incremental/full findings mismatch')
         out.mkdir(parents=True)
