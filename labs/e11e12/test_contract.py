@@ -1,3 +1,5 @@
+import hashlib
+import json
 import copy
 import tempfile
 import unittest
@@ -192,6 +194,87 @@ class Student241880214(unittest.TestCase):
             self.assertIn('HEADERS = unused.h', (p/'Makefile').read_text())
             self.assertNotIn('HEADERS = unused.h config.h', (p/'Makefile').read_text())
             self.assertEqual(diff.count('+main.o:'),1)
+
+class Student241880214E13(unittest.TestCase):
+    """孙正奇 (241880214) E13：fixed_report_sha256 边界校验"""
+
+    def _setup_fixture(self, d):
+        d = Path(d)
+        repo = d / 'repo'; repo.mkdir()
+        target_dir = d / 'target'; target_dir.mkdir()
+        (target_dir / 'Makefile').write_text('main.o: main.c\n', encoding='utf-8')
+        candidate = d / 'candidate.Dockerfile'; candidate.write_text('FROM scratch\n', encoding='utf-8')
+        commit = 'a' * 40
+        fixed_data = {
+            'schema_version': 'e11e12-1',
+            'job_id': 'job-1',
+            'trace_id': 'trace-1',
+            'kind': 'fixed-md',
+            'commit': commit,
+            'status': 'SUCCEEDED',
+            'data': {'commit': commit, 'findings': []}
+        }
+        fixed_file = d / 'fixed.json'
+        fixed_bytes = json.dumps(fixed_data).encode('utf-8')
+        fixed_file.write_bytes(fixed_bytes)
+        fixed_sha = hashlib.sha256(fixed_bytes).hexdigest()
+        req = {
+            'mode': 'e11-b',
+            'repo': str(repo),
+            'base': commit,
+            'target': commit,
+            'candidate': str(candidate),
+            'fixed_report': str(fixed_file),
+        }
+        return req, fixed_sha, commit, target_dir
+
+    def _execute_with_mocks(self, req, out, commit, target_dir):
+        def fake_autobuild(target, candidate, draft_dir, expected, timeout=600):
+            draft_dir.mkdir(parents=True, exist_ok=True)
+            (draft_dir / 'result.json').write_text('{"status": "SUCCEEDED"}', encoding='utf-8')
+            return {'status': 'SUCCEEDED'}
+
+        def fake_validate(target, patchfile, evidence_dir):
+            evidence_dir.mkdir(parents=True, exist_ok=True)
+            (evidence_dir / 'validation.json').write_text('{"accepted": true}', encoding='utf-8')
+            return {'accepted': True}
+
+        def fake_full(target, evidence_dir):
+            evidence_dir.mkdir(parents=True, exist_ok=True)
+            (evidence_dir / 'findings.json').write_text('{"findings": []}', encoding='utf-8')
+            return {'findings': []}
+
+        with patch('pipeline.snapshot', return_value=(commit, target_dir)), \
+             patch('draft.autobuild.auto_build', side_effect=fake_autobuild), \
+             patch('pipeline.patch', return_value=('+main.o: main.c extra.h', [{'target': 'main.o', 'dependency': 'extra.h', 'style': 'direct'}])), \
+             patch('pipeline.validate', side_effect=fake_validate), \
+             patch('pipeline.full', side_effect=fake_full):
+            return pipeline.execute(req, out)
+
+    def test_fixed_report_sha256_missing_is_backward_compatible(self):
+        with tempfile.TemporaryDirectory() as d:
+            req, fixed_sha, commit, target_dir = self._setup_fixture(d)
+            req.pop('fixed_report_sha256', None)
+            res = self._execute_with_mocks(req, Path(d) / 'out', commit, target_dir)
+            self.assertEqual(res['status'], 'SUCCEEDED')
+            self.assertNotIn('error', res)
+
+    def test_fixed_report_sha256_mismatch_fails_with_artifact_hash_mismatch(self):
+        with tempfile.TemporaryDirectory() as d:
+            req, fixed_sha, commit, target_dir = self._setup_fixture(d)
+            bad_req = dict(req, fixed_report_sha256='0' * 64)
+            res = self._execute_with_mocks(bad_req, Path(d) / 'out', commit, target_dir)
+            self.assertEqual(res['status'], 'FAILED')
+            self.assertEqual(res['error']['code'], 'ARTIFACT_HASH_MISMATCH')
+
+    def test_fixed_report_file_missing_fails_explicitly_not_keyerror(self):
+        with tempfile.TemporaryDirectory() as d:
+            req, fixed_sha, commit, target_dir = self._setup_fixture(d)
+            missing_req = dict(req, fixed_report=str(Path(d) / 'nonexistent_report.json'))
+            res = self._execute_with_mocks(missing_req, Path(d) / 'out', commit, target_dir)
+            self.assertEqual(res['status'], 'FAILED')
+            self.assertNotEqual(res['error']['code'], 'KeyError')
+            self.assertIn('No such file or directory', res['error']['message'])
 
 class Student241880237(unittest.TestCase):
     """自主任务：同一目标两条 MISSING 的计划顺序与单行合并。
