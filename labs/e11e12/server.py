@@ -6,15 +6,21 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 import json
 from pathlib import Path
 import threading
+import time
 import uuid
 from urllib.parse import unquote
 from pipeline import ROOT,execute,save
+
+def logline(fields):
+    print(json.dumps(fields,ensure_ascii=False,sort_keys=True),flush=True)
+
 
 class Store:
     def __init__(self, root):
         self.root=root;root.mkdir(parents=True,exist_ok=True)
         self.lock=threading.Lock();self.pool=ThreadPoolExecutor(max_workers=1)
         self.jobs={};self.keys={}
+        self.totals={};self.duration=0.0;self.inflight=0
         for p in root.glob('job-*/state.json'):
             state=json.loads(p.read_text())
             if state['status'] in ('QUEUED','RUNNING'):
@@ -40,15 +46,37 @@ class Store:
             jid='job-'+uuid.uuid4().hex
             state={'schema_version':'e11e12-1','job_id':jid,'status':'QUEUED','idempotency_key':key,'request_hash':digest}
             self.jobs[jid]=state;self.keys[key]=(digest,jid);save(self.root/jid/'state.json',state)
+            logline({'event':'job_queued','job_id':jid,'trace_id':None,'status':'QUEUED','idempotency_key':key})
             self.pool.submit(self.work,jid,request)
             return dict(state)
     def work(self,jid,request):
         state=self.jobs[jid]
-        with self.lock:state['status']='RUNNING';save(self.root/jid/'state.json',state)
+        started=time.monotonic()
+        with self.lock:
+            state['status']='RUNNING';self.inflight+=1;save(self.root/jid/'state.json',state)
+            logline({'event':'job_running','job_id':jid,'trace_id':state.get('trace_id'),'status':'RUNNING'})
         try:r=execute(request,self.root/jid/'evidence',jid)
         except Exception as ex:r={'status':'FAILED','error':{'code':'WORKER_FAILED','message':str(ex)}}
+        elapsed=time.monotonic()-started
         with self.lock:
             state.update({k:r[k] for k in ('status','trace_id','error') if k in r});save(self.root/jid/'state.json',state)
+            self.inflight-=1
+            self.totals[state['status']]=self.totals.get(state['status'],0)+1
+            self.duration+=elapsed
+            logline({'event':'job_finished','job_id':jid,'trace_id':state.get('trace_id'),
+                     'status':state['status'],'error_code':(state.get('error') or {}).get('code'),
+                     'duration_ms':round(elapsed*1000)})
+    def metrics(self):
+        with self.lock:
+            lines=['# TYPE e12_jobs_total counter']
+            for status,value in sorted(self.totals.items()):
+                lines.append(f'e12_jobs_total{{status="{status}"}} {value}')
+            lines+=['# TYPE e12_job_duration_seconds summary',
+                    f'e12_job_duration_seconds_count {sum(self.totals.values())}',
+                    f'e12_job_duration_seconds_sum {self.duration:.6f}',
+                    '# TYPE e12_jobs_in_flight gauge',
+                    f'e12_jobs_in_flight {self.inflight}']
+        return ('\n'.join(lines)+'\n').encode()
 
 def serve(host='127.0.0.1',port=8080):
     store=Store(ROOT/'work/api-jobs')
@@ -64,6 +92,10 @@ def serve(host='127.0.0.1',port=8080):
             except (ValueError,KeyError,TypeError) as ex:self.reply(409 if str(ex)=='IDEMPOTENCY_CONFLICT' else 400,{'error':str(ex)})
         def do_GET(self):
             if self.path=='/health':return self.reply(200,{'status':'ok','schema_version':'e11e12-1'})
+            if self.path=='/metrics':
+                data=store.metrics();self.send_response(200)
+                self.send_header('Content-Type','text/plain; version=0.0.4; charset=utf-8')
+                self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data);return
             parts=self.path.split('?')[0].strip('/').split('/')
             if len(parts)<3 or parts[:2]!=['v1','jobs'] or parts[2] not in store.jobs:return self.reply(404,{'error':'NOT_FOUND'})
             jid=parts[2];out=store.root/jid/'evidence'
